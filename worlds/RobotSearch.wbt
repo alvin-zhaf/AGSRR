@@ -2,26 +2,86 @@
 
 EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2025a/projects/objects/backgrounds/protos/TexturedBackground.proto"
 EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2025a/projects/objects/backgrounds/protos/TexturedBackgroundLight.proto"
-EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2025a/projects/objects/floors/protos/RectangleArena.proto"
 EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2025a/projects/robots/surveyor/protos/SurveyorSrv1.proto"
 EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2025a/projects/robots/dji/mavic/protos/Mavic2Pro.proto"
+EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2025a/projects/objects/floors/protos/RectangleArena.proto"
+EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2025a/projects/appearances/protos/Asphalt.proto"
+EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2025a/projects/objects/rocks/protos/Rock.proto"
 
 WorldInfo {
 }
 Viewpoint {
-  orientation -0.31044362515876306 0.30697228088451006 0.8996625891782135 1.6875199002381402
-  position 0.624566575720479 -7.3749881928156835 6.358598283159593
+  orientation -0.41002853459886546 -0.3708183632109954 0.8332888708726557 4.433205890423627
+  position 2.117437308533724 8.412257945315584 10.539941624939903
 }
 TexturedBackground {
 }
 TexturedBackgroundLight {
 }
-RectangleArena {
-  floorSize 4 4
-}
 SurveyorSrv1 {
+  translation 0.51 2.8 0.36
+}
+Solid {
+  translation 0.05 0 0
+  children [
+    Pose {
+      translation -0.02 -0.03 0
+      children [
+        Shape {
+          appearance Asphalt {
+          }
+          geometry ElevationGrid {
+            height [
+              0, 0.3, 0.5, 0.2, 0, 0.3, 0.4, 0.6, 0.4, 0.2
+              0.4, 0.1, 0, 0.2, 0.15, 0.3, 0.4, 0.25, 0.15, 0.4
+              0.12, 0.3, 0.2, 0, 0.15
+            ]
+            xDimension 5
+            yDimension 5
+          }
+        }
+      ]
+    }
+  ]
+  boundingObject Shape {
+    appearance Asphalt {
+    }
+    geometry ElevationGrid {
+      height [
+        0, 0.3, 0.5, 0.2, 0, 0.3, 0.4, 0.6, 0.4, 0.2
+        0.4, 0.1, 0, 0.2, 0.15, 0.3, 0.4, 0.25, 0.15, 0.4
+        0.12, 0.3, 0.2, 0, 0.15
+      ]
+      xDimension 5
+      yDimension 5
+    }
+  }
+}
+Rock {
+  translation 2.09 0.8 0.62
+  scale 3
+}
+Rock {
+  translation 2.09 2.86 0.4
+  name "rock(1)"
+  scale 3
+}
+Rock {
+  translation 3.32 2.08 0.41
+  name "rock(3)"
+  scale 3
+}
+Rock {
+  translation 3.36 2.86 0.45
+  name "rock(2)"
+  scale 3
 }
 Mavic2Pro {
-  translation 6.664e-06 0 1.485
+  translation 0.42001 2.29 1.235
   rotation 0 1 0 4.692820414042842e-06
+}
+RectangleArena {
+  translation 2.03 1.97 0
+  floorSize 4 4
+  wallHeight 0.6
 }
