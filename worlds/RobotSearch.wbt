@@ -7,12 +7,13 @@ EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2025a/project
 EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2025a/projects/objects/floors/protos/RectangleArena.proto"
 EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2025a/projects/appearances/protos/Asphalt.proto"
 EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2025a/projects/objects/rocks/protos/Rock.proto"
+EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2025a/projects/objects/solids/protos/SolidBox.proto"
 
 WorldInfo {
 }
 Viewpoint {
-  orientation -0.41002853459886546 -0.3708183632109954 0.8332888708726557 4.433205890423627
-  position 2.117437308533724 8.412257945315584 10.539941624939903
+  orientation 0.21074571627415456 -0.10446127896800435 -0.9719434573412501 4.039490406697531
+  position 3.4435772183055784 -2.0697032434514773 3.2636725578595436
 }
 TexturedBackground {
 }
@@ -77,11 +78,15 @@ Rock {
   scale 3
 }
 Mavic2Pro {
-  translation 0.42001 2.29 1.235
+  translation 0.59001 3.57 0.455
   rotation 0 1 0 4.692820414042842e-06
 }
 RectangleArena {
   translation 2.03 1.97 0
   floorSize 4 4
   wallHeight 0.6
+}
+SolidBox {
+  translation 0.55 3.48 0.34
+  size 0.6 0.6 0.1
 }
