@@ -3,7 +3,6 @@
 EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2025a/projects/objects/backgrounds/protos/TexturedBackground.proto"
 EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2025a/projects/objects/backgrounds/protos/TexturedBackgroundLight.proto"
 EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2025a/projects/robots/surveyor/protos/SurveyorSrv1.proto"
-EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2025a/projects/robots/dji/mavic/protos/Mavic2Pro.proto"
 EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2025a/projects/objects/floors/protos/RectangleArena.proto"
 EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2025a/projects/appearances/protos/Asphalt.proto"
 EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2025a/projects/objects/rocks/protos/Rock.proto"
@@ -11,18 +10,23 @@ EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2025a/project
 WorldInfo {
 }
 Viewpoint {
-  orientation -0.41002853459886546 -0.3708183632109954 0.8332888708726557 4.433205890423627
-  position 2.117437308533724 8.412257945315584 10.539941624939903
+  orientation -0.5773502691896258 0.5773502691896258 0.5773502691896258 2.0944
+  position -0.30044914855333454 0.0953016707106663 5.678270778266823
 }
 TexturedBackground {
 }
 TexturedBackgroundLight {
 }
 SurveyorSrv1 {
-  translation 0.51 2.8 0.36
+  extensionSlot [
+    Compass {
+    }
+    GPS {
+    }
+  ]
 }
 Solid {
-  translation 0.05 0 0
+  translation 2.49849 -0.0565521 5.32907e-15
   children [
     Pose {
       translation -0.02 -0.03 0
@@ -76,12 +80,7 @@ Rock {
   name "rock(2)"
   scale 3
 }
-Mavic2Pro {
-  translation 0.42001 2.29 1.235
-  rotation 0 1 0 4.692820414042842e-06
-}
 RectangleArena {
-  translation 2.03 1.97 0
   floorSize 4 4
   wallHeight 0.6
 }
