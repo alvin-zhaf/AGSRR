@@ -2,7 +2,7 @@
 
 EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2025a/projects/objects/backgrounds/protos/TexturedBackground.proto"
 EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2025a/projects/objects/backgrounds/protos/TexturedBackgroundLight.proto"
-EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2025a/projects/robots/surveyor/protos/SurveyorSrv1.proto"
+EXTERNPROTO "../protos/SurveyorSrv1.proto"
 EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2025a/projects/robots/dji/mavic/protos/Mavic2Pro.proto"
 EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2025a/projects/objects/floors/protos/RectangleArena.proto"
 EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2025a/projects/appearances/protos/Asphalt.proto"
@@ -21,8 +21,8 @@ WorldInfo {
   }
 }
 Viewpoint {
-  orientation 0.21074571627415456 -0.10446127896800435 -0.9719434573412501 4.039490406697531
-  position 3.4435772183055784 -2.0697032434514773 3.2636725578595436
+  orientation 0.36633927648478 -0.24306404493999464 -0.8981733711049421 4.216432274523062
+  position 3.4291909079551064 -2.5137623673447256 5.043708970302448
 }
 TexturedBackground {
 }
@@ -30,6 +30,7 @@ TexturedBackgroundLight {
 }
 SurveyorSrv1 {
   translation 0.51 2.8 0.36
+  controller "surveyor"
 }
 Solid {
   translation 0.05 0 0
