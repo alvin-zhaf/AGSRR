@@ -56,12 +56,28 @@ int main(int argc, char **argv) {
   const double k_roll_p = 50.0;           // P constant of the roll PID.
   const double k_pitch_p = 30.0;          // P constant of the pitch PID.
 
-  // Target position
-  const double target_x = 3.5;
-  const double target_y = 3.5;
-  const double target_altitude = 1.0;
+  // Target positions
+  double waypoints[][3] = {
+  {0.5, 3.5, 1.0},
+  {0.5, 0.5, 1.0},
+  {1.0, 0.5, 1.0},
+  {1.0, 3.5, 1.0},
+  {1.5, 3.5, 1.0},
+  {1.5, 0.5, 1.0},
+  {2.0, 0.5, 1.0},
+  {2.0, 3.5, 1.0},
+  {2.5, 3.5, 1.0},
+  {2.5, 0.5, 1.0},
+  {3.0, 0.5, 1.0},
+  {3.0, 3.5, 1.0},
+  {3.5, 3.5, 1.0},
+  {3.5, 0.5, 1.0},
+  {0.5, 3.5, 1.0}
+  };
+  int num_waypoints = sizeof(waypoints) / sizeof(waypoints[0]);
+  int current_target = 0;
+  printf("Starting waypoint navigation. Total points: %d\n", num_waypoints);
   
-  printf("Navigating to target point (%f, %f, %f)...\n", target_x, target_y, target_altitude);
 
   // Main loop
   while (wb_robot_step(timestep) != -1) {
@@ -85,9 +101,16 @@ int main(int argc, char **argv) {
     wb_motor_set_position(camera_roll_motor, -0.115 * roll_velocity);
     wb_motor_set_position(camera_pitch_motor, -0.1 * pitch_velocity);
 
+    // Update target
+    double target_x = waypoints[current_target][0];
+    double target_y = waypoints[current_target][1];
+    double target_altitude = waypoints[current_target][2];
+    
     // Calculate xy position error
     double error_x = target_x - x;
     double error_y = target_y - y;
+    double error_altitude = target_altitude - altitude;
+    double error_xy = sqrt(error_x*error_x + error_y*error_y);
 
     // Compute the roll, pitch, yaw and disturbances.
     double pitch_disturbance = CLAMP(-error_x * 2.0, -2.0, 2.0); // Along sagittal plane
@@ -110,6 +133,17 @@ int main(int argc, char **argv) {
     wb_motor_set_velocity(front_right_motor, -front_right_motor_input);
     wb_motor_set_velocity(rear_left_motor, -rear_left_motor_input);
     wb_motor_set_velocity(rear_right_motor, rear_right_motor_input);
+    
+    // Check if waypoint reached (within 20 cm horizontally, 10 cm vertically)
+    if (error_xy < 0.20 && fabs(error_altitude) < 0.10) {
+      printf("Reached waypoint %d: (%f, %f, %f)\n", current_target, target_x, target_y, target_altitude);
+      if (current_target < num_waypoints - 1) {
+        current_target++;
+        printf("Moving to next waypoint %d...\n", current_target);
+      } else {
+        printf("Final waypoint reached. Holding position.\n");
+      }
+    }  
   };
 
   wb_robot_cleanup();
