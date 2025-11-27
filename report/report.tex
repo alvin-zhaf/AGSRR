@@ -10,54 +10,86 @@
 \usepackage{verbatim}
 \usepackage{graphicx}
 \usepackage{cite}
+\usepackage{lipsum}
 \hyphenation{op-tical net-works semi-conduc-tor IEEE-Xplore}
 % updated with editorial comments 8/9/2021
 
 \begin{document}
 
-\title{Aerial-supported Ground Search and Rescue Robot}
+\title{Improving Search and Rescue Response Times by Using Aerial-Supported Ground Search and Rescue Robots}
 
-\author{Alfian Fadhlurrahman, Shailee Kampani, Edward Silvey, Alvin Zhafif Afilla}
+\author{Edward Silvey, Alfian Fadhlurrahman, Shailee Kampani, Alvin Zhafif Afilla}
 
 % The paper headers
-\markboth{University of Birmingham Intelligent Robotics}%
-{Shell \MakeLowercase{\textit{et al.}}: A Sample Article Using IEEEtran.cls for IEEE Journals}
+\markboth{University of Birmingham Intelligent Robotics}
+{Edward Silvey, Alfian Fadhlurrahman, Shailee Kampani, Alvin Zhafif Afilla,\MakeLowercase{\textit{(et al.)}:Aerial-supported Ground Search and Rescue Robot}}
 
 \maketitle
 
 \begin{abstract}
-This paper presents a collaborative approach to search and rescue, using both aerial search drones and ground rescue rovers.
+Write this at the end when we know what we have written.
 \end{abstract}
 
 \begin{IEEEkeywords}
 Aerial Systems: Applications; Multi-Robot Systems; Search and Rescue Robots
 \end{IEEEkeywords}
 
-% I am not sure if the sections are correct and follow IEEE robotics format
 \section{Introduction}
-\IEEEPARstart{T}{his} section will outline and act as in intro to the file.  It seems to need the weird big letter as IEEE standards.  Could also be where we put link to repo.
+The \IEEEPARstart{T}{his} section will outline and act as the introduction of the paper.
+It will describe the problem as we did the the proposal.
+Describe current solutions and their problems.
+Maybe what other people have tried to do if we can find anything.
+And our hypothesis that the drone will assist and compare to the rover only.
 
-\section{Drone Movement and Flight Control}
-Section about how the drone works.
+\section{Methods}
+A brief intro to the methods summary outlining the different sections and that they are outlined below.
 
-\section{Target Location Detection and Tagging}
+\subsection{Drone Movement and Flight Control}
+\begin{itemize}
+    \item{Take off and landing}
+    \item{How flight path was assigned}
+    \item{How points are reached}
+\end{itemize}
+
+\subsection{Target Location Detection and Tagging}
+Think about the key points you need to cover to describe the methods you used.
 Section about how victims are located and that location is sent to the ground section.
 
-\section{Ground Robot Navigation, and Obstacle Avoidance}
+\subsection{Ground Robot Navigation, and Obstacle Avoidance}
+Think about the key points you need to cover to describe the methods you used.
 Section about how ground robot is moved and how it avoids obstacles.
 
-\section{Ground Robot Markov Localisation}
+\subsection{Ground Robot Markov Localisation}
+Think about the key points you need to cover to describe the methods you used.
 Section about how ground robot is moved and how it avoids obstacles.
+
+\subsection{Comparing Approaches}
+\begin{itemize}
+    \item{Set a test map with target locations}
+    \item{Time the processes to find all victims using single rover approach}
+    \item{Time the processes to find all victims using paired rover-drone approach}
+    \item{Repeat for different test maps with different victim locations and obstacles}
+\end{itemize}
+
+\section{Results}
+\begin{itemize}
+    \item{The maps}
+    \item{The times each system took to complete tasks}
+\end{itemize}
 
 \section{Conclusion}
-The conclusion
+\begin{itemize}
+    \item{complexity of terrain}
+    \item{distance from initial location}
+\end{itemize}
+\subsection{Limitations}
+Any Limitations
 
 \begin{thebibliography}{1}
 \bibliographystyle{IEEEtran}
+    \bibitem{ref1}
+    
 
-
-\bibitem{ref1}
-Maybe this should be the repo.
 
 \end{thebibliography}
 
