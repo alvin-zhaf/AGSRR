@@ -11,13 +11,14 @@ WorldInfo {
 }
 Viewpoint {
   orientation -0.5773502691896258 0.5773502691896258 0.5773502691896258 2.0944
-  position -0.30044914855333454 0.0953016707106663 5.678270778266823
+  position -0.003370000000000095 0.07458999999999993 8.211429850384931
 }
 TexturedBackground {
 }
 TexturedBackgroundLight {
 }
 SurveyorSrv1 {
+  translation 0 0 0.36
   extensionSlot [
     Compass {
     }
@@ -26,7 +27,7 @@ SurveyorSrv1 {
   ]
 }
 Solid {
-  translation 2.49849 -0.0565521 5.32907e-15
+  translation -1.97809 -1.97985 5.32907e-15
   children [
     Pose {
       translation -0.02 -0.03 0
