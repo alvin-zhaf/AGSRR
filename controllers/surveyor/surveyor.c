@@ -151,6 +151,9 @@ int main(int argc, char **argv) {
   wb_compass_enable(compass, timeStep);
   wb_camera_enable(camera, timeStep);
   
+  WbDeviceTag receiver = wb_robot_get_device("receiver");  
+  wb_receiver_enable(receiver, timeStep);
+  
   wb_motor_set_position(leftMotor, INFINITY);
   wb_motor_set_position(rightMotor, INFINITY);
   
@@ -175,6 +178,15 @@ int main(int argc, char **argv) {
       int b = wb_camera_image_get_blue(image, width/2, height/2, width);
       printf("Camera pixel = R:%d G:%d B:%d\n", r, g, b);
     }
+    
+    // Check for incoming messages from the drone
+      while (wb_receiver_get_queue_length(receiver) > 0) {
+        const char *message = (const char *)wb_receiver_get_data(receiver);
+        double x, y;
+        sscanf(message, "%lf,%lf", &x, &y);
+        printf("Received victim coordinates: x=%.2f, y=%.2f\n", x, y)
+        wb_receiver_next_packet(receiver); 
+      }
   }
 
   wb_robot_cleanup();

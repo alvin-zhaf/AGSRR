@@ -8,6 +8,8 @@ EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2025a/project
 EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2025a/projects/appearances/protos/Asphalt.proto"
 EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2025a/projects/objects/rocks/protos/Rock.proto"
 EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2025a/projects/objects/solids/protos/SolidBox.proto"
+EXTERNPROTO "../protos/RescueVictimSitting.proto"
+EXTERNPROTO "../protos/RescueVictimFaceUp.proto"
 
 WorldInfo {
   info [
@@ -21,8 +23,8 @@ WorldInfo {
   }
 }
 Viewpoint {
-  orientation 0.36633927648478 -0.24306404493999464 -0.8981733711049421 4.216432274523062
-  position 3.4291909079551064 -2.5137623673447256 5.043708970302448
+  orientation 0.5685677937242503 0.005585359882086019 -0.8226174491794628 3.1254259682489423
+  position 5.093998851988326 1.8545579111194175 7.815647036056849
 }
 TexturedBackground {
 }
@@ -31,6 +33,11 @@ TexturedBackgroundLight {
 SurveyorSrv1 {
   translation 0.51 2.8 0.36
   controller "surveyor"
+  extensionSlot [
+    DEF receiver Receiver {
+      name "receiver(1)"
+    }
+  ]
 }
 Solid {
   translation 0.05 0 0
@@ -90,11 +97,34 @@ Rock {
 Mavic2Pro {
   translation 0.59001 3.57 0.455
   rotation 0 0 1 -0.0015953071795866691
+  bodySlot [
+    DEF emitter Emitter {
+    }
+  ]
 }
 RectangleArena {
   translation 2.03 1.97 0
   floorSize 4 4
   wallHeight 0.6
+}
+DEF victim3 RescueVictimFaceUp {
+  translation 3.23921 1.67354 0.28
+  rotation 0 0 1 -2.094395307179586
+  scale 0.25 0.25 0.25
+  name "victim_faceup(1)"
+  shirtColor 0 0.8 0
+}
+DEF victim2 RescueVictimFaceUp {
+  translation 2.33051 3.20051 0.2
+  rotation 0 0 1 0.785398
+  scale 0.25 0.25 0.25
+  shirtColor 0 0.8 0
+}
+DEF victim1 RescueVictimSitting {
+  translation 2.38341 0.766499 0.549859
+  rotation 0.661306242390936 -0.6649042437097243 -0.3472411272755291 2.65147
+  scale 0.25 0.25 0.25
+  shirtColor 0 0.8 0
 }
 SolidBox {
   translation 0.55 3.48 0.34

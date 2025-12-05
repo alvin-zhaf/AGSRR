@@ -694,6 +694,8 @@ PROTO SurveyorSrv1 [
       }
       DEF ANTENNA_RECEIVER Receiver {
         translation 0.002 0.017 0.08
+        channel 1     
+        range 100
       }
       DEF CAMERA Camera {
         translation 0.058 0 0.037
