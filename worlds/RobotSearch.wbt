@@ -8,6 +8,7 @@ EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2025a/project
 EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2025a/projects/appearances/protos/Asphalt.proto"
 EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2025a/projects/objects/rocks/protos/Rock.proto"
 EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2025a/projects/objects/solids/protos/SolidBox.proto"
+EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2025a/projects/objects/animals/protos/Sheep.proto"
 
 WorldInfo {
   info [
@@ -21,8 +22,8 @@ WorldInfo {
   }
 }
 Viewpoint {
-  orientation 0.36633927648478 -0.24306404493999464 -0.8981733711049421 4.216432274523062
-  position 3.4291909079551064 -2.5137623673447256 5.043708970302448
+  orientation 0.46936859009767357 -0.26188475209251355 -0.8432730893673561 4.0211358346353565
+  position 3.2039743455886227 -0.39684229292003936 4.553328564389954
 }
 TexturedBackground {
 }
@@ -99,4 +100,8 @@ RectangleArena {
 SolidBox {
   translation 0.55 3.48 0.34
   size 0.6 0.6 0.1
+}
+Sheep {
+  translation 2.19 2.14 -0.01
+  scale 0.5
 }

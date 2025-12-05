@@ -7,4 +7,5 @@ build/release/surveyor.o: surveyor.c \
  C:\Program\ Files\Webots/include/controller/c/webots/gps.h \
  C:\Program\ Files\Webots/include/controller/c/webots/compass.h \
  C:\Program\ Files\Webots/include/controller/c/webots/camera.h \
- C:\Program\ Files\Webots/include/controller/c/webots/camera_recognition_object.h
+ C:\Program\ Files\Webots/include/controller/c/webots/camera_recognition_object.h \
+ C:\Program\ Files\Webots/include/controller/c/webots/distance_sensor.h
