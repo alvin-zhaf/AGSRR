@@ -4,4 +4,5 @@ build/release/surveyor.o: surveyor.c \
  C:\Program\ Files\Webots/include/controller/c/webots/nodes.h \
  C:\Program\ Files\Webots/include/controller/c/webots/motor.h \
  C:\Program\ Files\Webots/include/controller/c/webots/gps.h \
- C:\Program\ Files\Webots/include/controller/c/webots/compass.h
+ C:\Program\ Files\Webots/include/controller/c/webots/compass.h \
+ C:\Program\ Files\Webots/include/controller/c/webots/distance_sensor.h

@@ -11,7 +11,9 @@ WorldInfo {
 }
 Viewpoint {
   orientation -0.5773502691896258 0.5773502691896258 0.5773502691896258 2.0944
-  position -0.003370000000000095 0.07458999999999993 8.211429850384931
+  position 0.005510607740661174 1.4092276245814255e-05 8.70447257157197
+  follow "SurveyorSrv1"
+  followType "None"
 }
 TexturedBackground {
 }
@@ -27,7 +29,7 @@ SurveyorSrv1 {
   ]
 }
 Solid {
-  translation -1.97809 -1.97985 5.32907e-15
+  translation 2.04733 -1.97403 5.32907e-15
   children [
     Pose {
       translation -0.02 -0.03 0
@@ -63,21 +65,16 @@ Solid {
   }
 }
 Rock {
-  translation 2.09 0.8 0.62
+  translation 2.36745 0.532337 0.11
   scale 3
 }
 Rock {
-  translation 2.09 2.86 0.4
-  name "rock(1)"
-  scale 3
-}
-Rock {
-  translation 3.32 2.08 0.41
+  translation 0.0122005 -1.01758 0.08
   name "rock(3)"
   scale 3
 }
 Rock {
-  translation 3.36 2.86 0.45
+  translation 0.9622 -0.10758 0.08
   name "rock(2)"
   scale 3
 }
