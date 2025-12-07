@@ -2,34 +2,45 @@
 
 EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2025a/projects/objects/backgrounds/protos/TexturedBackground.proto"
 EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2025a/projects/objects/backgrounds/protos/TexturedBackgroundLight.proto"
-EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2025a/projects/robots/surveyor/protos/SurveyorSrv1.proto"
+EXTERNPROTO "../protos/SurveyorSrv1.proto"
+EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2025a/projects/robots/dji/mavic/protos/Mavic2Pro.proto"
 EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2025a/projects/objects/floors/protos/RectangleArena.proto"
 EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2025a/projects/appearances/protos/Asphalt.proto"
 EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2025a/projects/objects/rocks/protos/Rock.proto"
+EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2025a/projects/objects/solids/protos/SolidBox.proto"
+EXTERNPROTO "../protos/RescueVictimSitting.proto"
+EXTERNPROTO "../protos/RescueVictimFaceUp.proto"
 
 WorldInfo {
+  info [
+    "This demonstration shows a DJI Mavic 2 PRO assisting a ground based robot locate a target destination."
+  ]
+  title "Robot Search"
+  basicTimeStep 8
+  defaultDamping Damping {
+    linear 0.5
+    angular 0.5
+  }
 }
 Viewpoint {
-  orientation -0.5773502691896258 0.5773502691896258 0.5773502691896258 2.0944
-  position 0.005510607740661174 1.4092276245814255e-05 8.70447257157197
-  follow "SurveyorSrv1"
-  followType "None"
+  orientation 0.5685677937242503 0.005585359882086019 -0.8226174491794628 3.1254259682489423
+  position 5.093998851988326 1.8545579111194175 7.815647036056849
 }
 TexturedBackground {
 }
 TexturedBackgroundLight {
 }
 SurveyorSrv1 {
-  translation 0 0 0.36
+  translation 0.51 2.8 0.36
+  controller "surveyor"
   extensionSlot [
-    Compass {
-    }
-    GPS {
+    DEF receiver Receiver {
+      name "receiver(1)"
     }
   ]
 }
 Solid {
-  translation 2.04733 -1.97403 5.32907e-15
+  translation 0.05 0 0
   children [
     Pose {
       translation -0.02 -0.03 0
@@ -65,20 +76,57 @@ Solid {
   }
 }
 Rock {
-  translation 2.36745 0.532337 0.11
+  translation 2.09 0.8 0.62
   scale 3
 }
 Rock {
-  translation 0.0122005 -1.01758 0.08
+  translation 2.09 2.86 0.4
+  name "rock(1)"
+  scale 3
+}
+Rock {
+  translation 3.32 2.08 0.41
   name "rock(3)"
   scale 3
 }
 Rock {
-  translation 0.9622 -0.10758 0.08
+  translation 3.36 2.86 0.45
   name "rock(2)"
   scale 3
 }
+Mavic2Pro {
+  translation 0.59001 3.57 0.455
+  rotation 0 0 1 -0.0015953071795866691
+  bodySlot [
+    DEF emitter Emitter {
+    }
+  ]
+}
 RectangleArena {
+  translation 2.03 1.97 0
   floorSize 4 4
   wallHeight 0.6
+}
+DEF victim3 RescueVictimFaceUp {
+  translation 3.23921 1.67354 0.28
+  rotation 0 0 1 -2.094395307179586
+  scale 0.25 0.25 0.25
+  name "victim_faceup(1)"
+  shirtColor 0 0.8 0
+}
+DEF victim2 RescueVictimFaceUp {
+  translation 2.33051 3.20051 0.2
+  rotation 0 0 1 0.785398
+  scale 0.25 0.25 0.25
+  shirtColor 0 0.8 0
+}
+DEF victim1 RescueVictimSitting {
+  translation 2.38341 0.766499 0.549859
+  rotation 0.661306242390936 -0.6649042437097243 -0.3472411272755291 2.65147
+  scale 0.25 0.25 0.25
+  shirtColor 0 0.8 0
+}
+SolidBox {
+  translation 0.55 3.48 0.34
+  size 0.6 0.6 0.1
 }

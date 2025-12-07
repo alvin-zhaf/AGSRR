@@ -1,0 +1,47 @@
+#VRML_SIM R2025a utf8
+
+PROTO RescueVictimSitting [
+  field SFVec3f translation 0 0 0
+  field SFRotation rotation 0 1 0 0
+  field SFVec3f scale 1 1 1
+  field SFString name "victim_sitting"
+  field SFColor shirtColor 0.8 0.2 0.2
+  field SFColor pantsColor 0.2 0.2 0.2
+] {
+  Solid {
+    translation IS translation
+    rotation IS rotation
+    name IS name
+    children [
+      Transform {
+        scale IS scale
+        children [
+          Transform { translation 0 0.5 0 rotation 1 0 0 -0.5
+            children [
+              Shape { geometry Box { size 0.3 0.5 0.15 } appearance Appearance { material Material { diffuseColor IS shirtColor } } }
+            ]
+          }
+          # Head
+          Transform { translation 0 0.95 0
+            children [
+              Shape { geometry Sphere { radius 0.12 } appearance Appearance { material Material { diffuseColor 1 0.8 0.6 } } }
+            ]
+          }
+          # Legs
+          Transform { translation -0.1 0.1 0.2 rotation 1 0 0 0.5
+            children [ Shape { geometry Box { size 0.1 0.5 0.1 } appearance Appearance { material Material { diffuseColor IS pantsColor } } } ] }
+          Transform { translation 0.1 0.1 0.2 rotation 1 0 0 0.5
+            children [ Shape { geometry Box { size 0.1 0.5 0.1 } appearance Appearance { material Material { diffuseColor IS pantsColor } } } ] }
+          # Arms
+          Transform { translation -0.25 0.5 0 children [ Shape { geometry Box { size 0.08 0.3 0.08 } appearance Appearance { material Material { diffuseColor IS shirtColor } } } ] }
+          Transform { translation 0.25 0.5 0 children [ Shape { geometry Box { size 0.08 0.3 0.08 } appearance Appearance { material Material { diffuseColor IS shirtColor } } } ] }
+          # Hands
+          Transform { translation -0.25 0.35 0 children [ Shape { geometry Sphere { radius 0.06 } appearance Appearance { material Material { diffuseColor 1 0.8 0.6 } } } ] }
+          Transform { translation 0.25 0.35 0 children [ Shape { geometry Sphere { radius 0.06 } appearance Appearance { material Material { diffuseColor 1 0.8 0.6 } } } ] }
+        ]
+      }
+    ]
+    physics NULL
+    boundingObject Box { size 0.5 1.2 0.4 }
+  }
+}
