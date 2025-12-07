@@ -7,8 +7,6 @@ centralWidgetVisible: 1
 orthographicViewHeight: 1
 textFiles: 4 "controllers/surveyor/surveyor.c" "controllers/mavic2pro/mavic2pro.c" "protos/RescueVictimSitting.proto" "protos/RescueVictimFaceUp.proto" "protos/SurveyorSrv1.proto"
 consoles: Console:All:All
-renderingDevicePerspectives: Mavic 2 PRO:camera;1;0.475;0;0.682583
-renderingDevicePerspectives: SurveyorSrv1:camera;1;1;0;0
 renderingDevicePerspectives: Mavic 2 PRO:camera;1;0.6675;0;0
 renderingDevicePerspectives: SurveyorSrv1:camera;0;0.797917;0;0
 renderingDevicePerspectives: SurveyorSrv1:ground_cam;1;0.275926;0;0.129614
