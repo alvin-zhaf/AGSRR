@@ -10,4 +10,7 @@ build/release/mavic2pro.o: mavic2pro.c \
   /Applications/Webots.app/Contents/include/controller/c/webots/inertial_unit.h \
   /Applications/Webots.app/Contents/include/controller/c/webots/keyboard.h \
   /Applications/Webots.app/Contents/include/controller/c/webots/led.h \
-  /Applications/Webots.app/Contents/include/controller/c/webots/motor.h
+  /Applications/Webots.app/Contents/include/controller/c/webots/motor.h \
+  /Applications/Webots.app/Contents/include/controller/c/webots/supervisor.h \
+  /Applications/Webots.app/Contents/include/controller/c/webots/contact_point.h \
+  /Applications/Webots.app/Contents/include/controller/c/webots/emitter.h
