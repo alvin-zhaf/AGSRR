@@ -68,21 +68,21 @@ int main(int argc, char **argv) {
 
   // Target positions
   double waypoints[][3] = {
-  {0.50, 3.50, 1.00},
-  {0.50, 0.50, 2.00},
-  {1.00, 0.50, 2.00},
-  {1.00, 3.50, 2.00},
-  {1.50, 3.50, 2.00},
-  {1.50, 0.50, 2.00},
-  {2.00, 0.50, 2.00},
-  {2.00, 3.50, 2.00},
-  {2.50, 3.50, 2.00},
-  {2.50, 0.50, 2.00},
-  {3.00, 0.50, 2.00},
-  {3.00, 3.50, 2.00},
-  {3.50, 3.50, 2.00},
-  {3.50, 0.50, 2.00},
-  {0.50, 3.50, 2.00},
+  {0.5, 3.5, 1.0},
+  {0.5, 0.5, 1.0},
+  {1.0, 0.5, 1.0},
+  {1.0, 3.5, 1.0},
+  {1.5, 3.5, 1.0},
+  {1.5, 0.5, 1.0},
+  {2.0, 0.5, 1.0},
+  {2.0, 3.5, 1.0},
+  {2.5, 3.5, 1.0},
+  {2.5, 0.5, 1.0},
+  {3.0, 0.5, 1.0},
+  {3.0, 3.5, 1.0},
+  {3.5, 3.5, 1.0},
+  {3.5, 0.5, 1.0},
+  {0.5, 3.5, 1.0}
   };
   int num_waypoints = sizeof(waypoints) / sizeof(waypoints[0]);
   int current_target = 0;
@@ -109,7 +109,7 @@ int main(int argc, char **argv) {
 
     // Stabilize the Camera by actuating the camera motors according to the gyro feedback.
     wb_motor_set_position(camera_roll_motor, -0.115 * roll_velocity);
-    wb_motor_set_position(camera_pitch_motor, 1.57);
+    wb_motor_set_position(camera_pitch_motor, -0.1 * pitch_velocity);
 
     // Update target
     double target_x = waypoints[current_target][0];
@@ -123,8 +123,8 @@ int main(int argc, char **argv) {
     double error_xy = sqrt(error_x*error_x + error_y*error_y);
 
     // Compute the roll, pitch, yaw and disturbances.
-    double pitch_disturbance = CLAMP(-error_x * 2, -2.0, 2.0); // Along sagittal plane
-    double roll_disturbance  = CLAMP(error_y * 2, -2.0, 2.0);  // Along frontal plane
+    double pitch_disturbance = CLAMP(-error_x * 2.0, -2.0, 2.0); // Along sagittal plane
+    double roll_disturbance  = CLAMP(error_y * 2.0, -2.0, 2.0);  // Along frontal plane
     double yaw_disturbance = 0.0;  // Rotation
     const double clamped_difference_altitude = CLAMP(target_altitude - altitude + k_vertical_offset, -1.0, 1.0);
     const double vertical_input = k_vertical_p * pow(clamped_difference_altitude, 3.0);
