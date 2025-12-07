@@ -1,6 +1,7 @@
 #include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 #include <webots/robot.h>
 
@@ -12,8 +13,14 @@
 #include <webots/keyboard.h>
 #include <webots/led.h>
 #include <webots/motor.h>
+#include <webots/supervisor.h>
+#include <webots/emitter.h>
+
 
 #define CLAMP(value, low, high) ((value) < (low) ? (low) : ((value) > (high) ? (high) : (value)))
+
+#define NUM_VICTIMS 3
+const char *victim_defs[NUM_VICTIMS] = {"victim1", "victim2", "victim3"};
 
 int main(int argc, char **argv) {
   wb_robot_init();
@@ -48,6 +55,9 @@ int main(int argc, char **argv) {
     wb_motor_set_position(motors[m], INFINITY);
     wb_motor_set_velocity(motors[m], 1.0);
   }
+  
+  WbDeviceTag emitter = wb_robot_get_device("emitter");
+  wb_emitter_set_channel(emitter, 1);
 
  // Constants, empirically found.
   const double k_vertical_thrust = 68.5;  // with this thrust, the drone lifts.
@@ -143,7 +153,43 @@ int main(int argc, char **argv) {
       } else {
         printf("Final waypoint reached. Holding position.\n");
       }
-    }  
+      
+    // Victim Detection and Tagging
+    const unsigned char *image = wb_camera_get_image(camera);
+    if (image != NULL) {
+      int width = wb_camera_get_width(camera);
+      int height = wb_camera_get_height(camera);
+
+      for (int v = 0; v < NUM_VICTIMS; v++) {
+        WbNodeRef victim = wb_supervisor_node_get_from_def(victim_defs[v]);
+        if (!victim) continue;
+
+        const double *pos = wb_supervisor_node_get_position(victim);
+
+        // Detecting green
+        int r = wb_camera_image_get_red(image, width/2, height/2, width);
+        int g = wb_camera_image_get_green(image, width/2, height/2, width);
+        int b = wb_camera_image_get_blue(image, width/2, height/2, width);
+
+        if (g > 200 && r < 50 && b < 50) {  // green detected
+          // Tag victim by changing shirt to red
+          WbFieldRef appearance = wb_supervisor_node_get_field(victim, "appearance");
+          WbNodeRef app_node = wb_supervisor_field_get_sf_node(appearance);
+          WbFieldRef color_field = wb_supervisor_node_get_field(app_node, "baseColor");
+          double red[3] = {1, 0, 0};
+          wb_supervisor_field_set_sf_color(color_field, red);
+
+          // Sending coordinates to ground robot
+          char message[128];
+          sprintf(message, "Victim tagged at: %f %f %f", pos[0], pos[1], pos[2]);
+          wb_emitter_send(emitter, message, strlen(message)+1);
+          printf("Tagged and sent: %s\n", message);
+        }
+      }
+    }
+    
+    
+      
   };
 
   wb_robot_cleanup();
