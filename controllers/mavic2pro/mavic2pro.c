@@ -187,11 +187,9 @@ int main(int argc, char **argv) {
         }
       }
     }
-    
-    
-      
+  }
   };
-
+  
   wb_robot_cleanup();
   return EXIT_SUCCESS;
 }
