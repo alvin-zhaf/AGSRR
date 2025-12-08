@@ -33,6 +33,6 @@ PROTO RescueVictimFaceUp [
       }
     ]
     physics NULL
-    boundingObject Box { size 0.5 1.2 0.4 }
+    boundingObject Box { size 0.3 0.3 0.2}
   }
 }

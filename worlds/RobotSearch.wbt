@@ -23,15 +23,15 @@ WorldInfo {
   }
 }
 Viewpoint {
-  orientation 0.5685677937242503 0.005585359882086019 -0.8226174491794628 3.1254259682489423
-  position 5.093998851988326 1.8545579111194175 7.815647036056849
+  orientation 0.21088147268605523 0.8535105190282731 -0.47649637814557244 0.9567021289574087
+  position -2.4672838202492358 4.958788878051857 7.087821422591518
 }
 TexturedBackground {
 }
 TexturedBackgroundLight {
 }
 SurveyorSrv1 {
-  translation 0.51 2.8 0.36
+  translation 0.51 2.8 -0.01
   controller "surveyor"
   extensionSlot [
     DEF receiver Receiver {
@@ -40,7 +40,7 @@ SurveyorSrv1 {
   ]
 }
 Solid {
-  translation 0.05 0 0
+  translation 0.05 -4.59 0
   children [
     Pose {
       translation -0.02 -0.03 0
@@ -76,21 +76,31 @@ Solid {
   }
 }
 Rock {
-  translation 2.09 0.8 0.62
+  translation 2.09 0.43 0.14
   scale 3
 }
 Rock {
-  translation 2.09 2.86 0.4
+  translation 2.09 2.86 0.05
   name "rock(1)"
   scale 3
 }
 Rock {
-  translation 3.32 2.08 0.41
+  translation 1.75 1.91 0.12
+  name "rock(4)"
+  scale 3
+}
+Rock {
+  translation 0.99 1.06 0.12
   name "rock(3)"
   scale 3
 }
 Rock {
-  translation 3.36 2.86 0.45
+  translation 3.85 1.33 0.12
+  name "rock(5)"
+  scale 3
+}
+Rock {
+  translation 3.36 3.3 0.14
   name "rock(2)"
   scale 3
 }
@@ -108,20 +118,20 @@ RectangleArena {
   wallHeight 0.6
 }
 DEF victim3 RescueVictimFaceUp {
-  translation 3.23921 1.67354 0.28
+  translation 3.23921 1.67354 0.03
   rotation 0 0 1 -2.094395307179586
   scale 0.25 0.25 0.25
   name "victim_faceup(1)"
   shirtColor 0 0.8 0
 }
 DEF victim2 RescueVictimFaceUp {
-  translation 2.33051 3.20051 0.2
+  translation 2.33051 3.20051 0.01
   rotation 0 0 1 0.785398
   scale 0.25 0.25 0.25
   shirtColor 0 0.8 0
 }
 DEF victim1 RescueVictimSitting {
-  translation 2.38341 0.766499 0.549859
+  translation 2.46015 0.409048 0.044437
   rotation 0.661306242390936 -0.6649042437097243 -0.3472411272755291 2.65147
   scale 0.25 0.25 0.25
   shirtColor 0 0.8 0

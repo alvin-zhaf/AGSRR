@@ -9,7 +9,6 @@
 #include <webots/distance_sensor.h>
 #include <webots/keyboard.h>
 #include <webots/camera.h>
-#include <webots/receiver.h>
 
 #define MAX_SPEED 0.25
 #define TOLERANCE 0.05
@@ -25,6 +24,20 @@
 #define WORLD_MIN_Y -2.0
 #define WORLD_MAX_Y 2.0
 
+/* Predefined waypoints (x, y) - z axis ignored */
+#define NUM_WAYPOINTS 9
+static const double WAYPOINTS[NUM_WAYPOINTS][2] = {
+  {3.36, 2.86},
+  {3.32, 2.08},
+  {0.32, 2.08},
+  {0.33, 1.39},
+  {3.32, 1.39},
+  {3.32, 0.80},
+  {0.33, 0.80},
+  {0.32, 0.11},
+  {3.32, 0.11}
+};
+
 typedef enum {
   MODE_KEYBOARD,
   MODE_AUTONOMOUS
@@ -36,7 +49,8 @@ typedef enum {
   STATE_OBSTACLE_CHECK,
   STATE_AVOID_OBSTACLE,
   STATE_PAUSE,
-  STATE_IDLE
+  STATE_IDLE,
+  STATE_COMPLETE
 } RobotState;
 
 typedef struct {
@@ -54,7 +68,8 @@ typedef struct {
   int obstacle_frames;
   double detour_x, detour_y;
   int pause_counter;
-  bool has_target;
+  int current_waypoint;  /* Index of current waypoint */
+  bool waypoint_reached; /* true if pause is after reaching waypoint, false if after detour */
 } RobotContext;
 
 static double belief[GRID_SIZE][GRID_SIZE];
@@ -166,6 +181,18 @@ static void markov_step(Pose pose) {
   normalize_belief();
 }
 
+// identify and set the next waypoint for traversal
+static bool set_next_waypoint(RobotContext *ctx) {
+  if (ctx->current_waypoint < NUM_WAYPOINTS) {
+    ctx->target_x = WAYPOINTS[ctx->current_waypoint][0];
+    ctx->target_y = WAYPOINTS[ctx->current_waypoint][1];
+    printf("Navigating to waypoint %d: (%.2f, %.2f)\n", 
+           ctx->current_waypoint + 1, ctx->target_x, ctx->target_y);
+    return true;
+  }
+  return false;
+}
+
 int main(int argc, char **argv) {
   wb_robot_init();
   const int timeStep = wb_robot_get_basic_time_step();
@@ -174,7 +201,7 @@ int main(int argc, char **argv) {
 
   printf("Select mode (click 3D window first):\n");
   printf("  1 = Keyboard control with Markov localization\n");
-  printf("  2 = Autonomous navigation (drone waypoints)\n");
+  printf("  2 = Autonomous waypoint navigation\n");
 
   RobotMode mode = MODE_AUTONOMOUS;
   bool mode_selected = false;
@@ -188,7 +215,7 @@ int main(int argc, char **argv) {
     else if (key == '2') {
       mode = MODE_AUTONOMOUS;
       mode_selected = true;
-      printf("Mode: Autonomous navigation\n");
+      printf("Mode: Autonomous waypoint navigation\n");
     }
   }
 
@@ -202,7 +229,7 @@ int main(int argc, char **argv) {
   wb_motor_set_position(motors.right, INFINITY);
   set_motor_speeds(motors, 0, 0);
 
-  WbDeviceTag front_ds = 0, camera = 0, receiver = 0;
+  WbDeviceTag front_ds = 0, camera = 0;
 
   if (mode == MODE_KEYBOARD) {
     camera = wb_robot_get_device("ground_cam");
@@ -215,13 +242,22 @@ int main(int argc, char **argv) {
     front_ds = wb_robot_get_device("ds0");
     if (front_ds)
       wb_distance_sensor_enable(front_ds, timeStep);
-    receiver = wb_robot_get_device("receiver");
-    if (receiver)
-      wb_receiver_enable(receiver, timeStep);
-    printf("\nAutonomous mode: Waiting for drone coordinates...\n");
+    
+    printf("\nAutonomous mode: Traversing %d waypoints...\n", NUM_WAYPOINTS);
+    printf("Waypoint list:\n");
+    for (int i = 0; i < NUM_WAYPOINTS; i++) {
+      printf("  %d: (%.2f, %.2f)\n", i + 1, WAYPOINTS[i][0], WAYPOINTS[i][1]);
+    }
+    printf("\n");
   }
 
-  RobotContext ctx = {.state = STATE_INIT, .has_target = false};
+  RobotContext ctx = {
+    .state = STATE_INIT, 
+    .current_waypoint = 0,
+    .obstacle_frames = 0,
+    .pause_counter = 0,
+    .waypoint_reached = false
+  };
   int init_counter = 0;
 
   while (wb_robot_step(timeStep) != -1) {
@@ -260,42 +296,47 @@ int main(int argc, char **argv) {
         }
       }
     }
-    else
+    // autonomous waypoint navigation through coords
+    else 
     {
-      /* Check for new waypoint from drone */
-      while (receiver && wb_receiver_get_queue_length(receiver) > 0) {
-        const char *msg = (const char *)wb_receiver_get_data(receiver);
-        sscanf(msg, "%lf,%lf", &ctx.target_x, &ctx.target_y);
-        printf("New target from drone: (%.2f, %.2f)\n", ctx.target_x, ctx.target_y);
-        ctx.has_target = true;
-        ctx.state = STATE_NAVIGATE;
-        wb_receiver_next_packet(receiver);
-      }
-
       double front_distance = front_ds ? wb_distance_sensor_get_value(front_ds) : 0;
 
       switch (ctx.state) {
       case STATE_INIT:
         if (++init_counter >= 10) {
           ctx.prev_front_distance = front_distance;
-          ctx.state = ctx.has_target ? STATE_NAVIGATE : STATE_IDLE;
+          if (set_next_waypoint(&ctx)) {
+            ctx.state = STATE_NAVIGATE;
+          } else {
+            ctx.state = STATE_COMPLETE;
+          }
         }
         break;
-
+      
       case STATE_IDLE:
         set_motor_speeds(motors, 0, 0);
         break;
-
+      
+      // completion state
+      case STATE_COMPLETE:
+        set_motor_speeds(motors, 0, 0);
+        printf("All waypoints completed! Robot stopped.\n");
+        ctx.state = STATE_IDLE; 
+        break;
+        
+      // coordinate based navigation system that follows a lawn mowing pattern
       case STATE_NAVIGATE:
       {
         double change = fabs(front_distance - ctx.prev_front_distance);
         ctx.prev_front_distance = front_distance;
-
+        
         if (distance_to_point(pose, ctx.target_x, ctx.target_y) < TOLERANCE)
         {
-          printf("Reached target (%.2f, %.2f)\n", ctx.target_x, ctx.target_y);
-          ctx.has_target = false;
+          printf("Reached waypoint %d: (%.2f, %.2f)\n", 
+                 ctx.current_waypoint + 1, ctx.target_x, ctx.target_y);
+          ctx.current_waypoint++;
           ctx.pause_counter = 0;
+          ctx.waypoint_reached = true;  
           set_motor_speeds(motors, 0, 0);
           ctx.state = STATE_PAUSE;
         }
@@ -311,7 +352,8 @@ int main(int argc, char **argv) {
         }
         break;
       }
-
+      
+      // state for checking obstacles in the path
       case STATE_OBSTACLE_CHECK:
       {
         double change = fabs(front_distance - ctx.prev_front_distance);
@@ -326,6 +368,7 @@ int main(int argc, char **argv) {
         {
           if (++ctx.obstacle_frames >= OBSTACLE_SUSTAINED_FRAMES)
           {
+            printf("Obstacle detected! Initiating detour...\n");
             ctx.detour_x = pose.x + 0.3 * sin(pose.heading);
             ctx.detour_y = pose.y - 0.3 * cos(pose.heading);
             ctx.obstacle_frames = 0;
@@ -343,10 +386,13 @@ int main(int argc, char **argv) {
         }
         break;
       }
-
+      
+      // detour or obtsacle avoidance state
       case STATE_AVOID_OBSTACLE:
         if (distance_to_point(pose, ctx.detour_x, ctx.detour_y) < TOLERANCE) {
+          printf("Detour complete, resuming navigation to waypoint %d...\n", ctx.current_waypoint + 1);
           ctx.pause_counter = 0;
+          ctx.waypoint_reached = false; // indication for obstacle avoidance only and proceed to the originally set waypoints
           set_motor_speeds(motors, 0, 0);
           ctx.state = STATE_PAUSE;
         }
@@ -354,10 +400,28 @@ int main(int argc, char **argv) {
           drive_to_target(motors, pose, ctx.detour_x, ctx.detour_y);
         }
         break;
-
+      
+      // pause state to pause a bit before continuing traversal
       case STATE_PAUSE:
-        if (++ctx.pause_counter >= PAUSE_STEPS)
-          ctx.state = ctx.has_target ? STATE_NAVIGATE : STATE_IDLE;
+        if (++ctx.pause_counter >= PAUSE_STEPS) {
+          if (ctx.waypoint_reached) {
+            if (ctx.current_waypoint < NUM_WAYPOINTS) {
+              if (set_next_waypoint(&ctx)) {
+                ctx.state = STATE_NAVIGATE;
+              } else {
+                ctx.state = STATE_COMPLETE;
+              }
+            } else {
+              ctx.state = STATE_COMPLETE;
+            }
+          }
+          // for detours we will continue to navigate to the previously set coordinates 
+          else {
+            printf("Resuming navigation to waypoint %d: (%.2f, %.2f)\n",
+                   ctx.current_waypoint + 1, ctx.target_x, ctx.target_y);
+            ctx.state = STATE_NAVIGATE;
+          }
+        }
         break;
       }
     }
