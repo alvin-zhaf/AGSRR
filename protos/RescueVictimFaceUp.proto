@@ -5,7 +5,7 @@ PROTO RescueVictimFaceUp [
   field SFRotation rotation 0 1 0 0
   field SFVec3f scale 1 1 1
   field SFString name "victim_faceup"
-  field SFColor shirtColor 0.2 0.3 0.8
+  field SFColor shirtColor 0 0.8 0
   field SFColor pantsColor 0.2 0.2 0.2
 ] {
   Solid {

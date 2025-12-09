@@ -23,8 +23,8 @@ WorldInfo {
   }
 }
 Viewpoint {
-  orientation 0.5685677937242503 0.005585359882086019 -0.8226174491794628 3.1254259682489423
-  position 5.093998851988326 1.8545579111194175 7.815647036056849
+  orientation 0.6188474145972209 0.0002775500325987728 -0.7855111714115306 3.1408834885958523
+  position 4.332209002370087 1.7985955544851466 8.0026840521012
 }
 TexturedBackground {
 }
@@ -97,8 +97,10 @@ Rock {
 Mavic2Pro {
   translation 0.59001 3.57 0.455
   rotation 0 0 1 -0.0015953071795866691
+  supervisor TRUE
   bodySlot [
     DEF emitter Emitter {
+      channel 1
     }
   ]
 }
@@ -112,19 +114,16 @@ DEF victim3 RescueVictimFaceUp {
   rotation 0 0 1 -2.094395307179586
   scale 0.25 0.25 0.25
   name "victim_faceup(1)"
-  shirtColor 0 0.8 0
 }
-DEF victim2 RescueVictimFaceUp {
+DEF victim1 RescueVictimFaceUp {
   translation 2.33051 3.20051 0.2
   rotation 0 0 1 0.785398
   scale 0.25 0.25 0.25
-  shirtColor 0 0.8 0
 }
-DEF victim1 RescueVictimSitting {
+DEF victim2 RescueVictimSitting {
   translation 2.38341 0.766499 0.549859
   rotation 0.661306242390936 -0.6649042437097243 -0.3472411272755291 2.65147
   scale 0.25 0.25 0.25
-  shirtColor 0 0.8 0
 }
 SolidBox {
   translation 0.55 3.48 0.34
