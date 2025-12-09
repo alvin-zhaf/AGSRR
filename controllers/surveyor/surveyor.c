@@ -2,6 +2,8 @@
 #include <stdio.h>
 #include <math.h>
 #include <stdbool.h>
+#include <string.h>
+
 #include <webots/robot.h>
 #include <webots/motor.h>
 #include <webots/gps.h>
@@ -10,6 +12,9 @@
 #include <webots/keyboard.h>
 #include <webots/camera.h>
 
+// ----------------------------
+// Movement constants (from original)
+// ----------------------------
 #define MAX_SPEED 0.25
 #define TOLERANCE 0.05
 #define SLOW_DOWN_DISTANCE 1.0
@@ -18,13 +23,26 @@
 #define TERRAIN_MAX_CHANGE 70.0
 #define PAUSE_STEPS 50
 
-#define GRID_SIZE 10
-#define WORLD_MIN_X -2.0
-#define WORLD_MAX_X 2.0
-#define WORLD_MIN_Y -2.0
-#define WORLD_MAX_Y 2.0
+// ----------------------------
+// SLAM / Mapping constants
+// ----------------------------
+#define MAP_SIZE 20
+#define WORLD_MIN_X  0.1
+#define WORLD_MAX_X  4.0
+#define WORLD_MIN_Y  0.0
+#define WORLD_MAX_Y  3.9
 
-/* Predefined waypoints (x, y) - z axis ignored */
+// Localization constants
+#define GRID_SIZE 10
+
+// Victim detection constants
+#define MAX_VICTIMS 20
+#define VICTIM_STOP_DURATION 50
+#define GREEN_THRESHOLD_MIN 80
+#define GREEN_DOMINANCE 15
+#define GREEN_RATIO_THRESHOLD 0.10
+
+// Predefined waypoints (from original)
 #define NUM_WAYPOINTS 9
 static const double WAYPOINTS[NUM_WAYPOINTS][2] = {
   {3.36, 2.86},
@@ -38,6 +56,20 @@ static const double WAYPOINTS[NUM_WAYPOINTS][2] = {
   {3.32, 0.11}
 };
 
+// SLAM Data
+static double belief[GRID_SIZE][GRID_SIZE];
+static double map_grid[MAP_SIZE][MAP_SIZE];
+
+// Victim Data
+typedef struct {
+  double x, y;
+  int grid_x, grid_y;
+} Victim;
+
+static Victim victims[MAX_VICTIMS];
+static int victim_count = 0;
+
+// Types
 typedef enum {
   MODE_KEYBOARD,
   MODE_AUTONOMOUS
@@ -49,6 +81,7 @@ typedef enum {
   STATE_OBSTACLE_CHECK,
   STATE_AVOID_OBSTACLE,
   STATE_PAUSE,
+  STATE_VICTIM_DETECTED,
   STATE_IDLE,
   STATE_COMPLETE
 } RobotState;
@@ -63,17 +96,19 @@ typedef struct {
 
 typedef struct {
   RobotState state;
+  RobotState prev_state;  // State to return to after victim detection
   double target_x, target_y;
   double prev_front_distance;
   int obstacle_frames;
   double detour_x, detour_y;
   int pause_counter;
-  int current_waypoint;  /* Index of current waypoint */
-  bool waypoint_reached; /* true if pause is after reaching waypoint, false if after detour */
+  int current_waypoint;
+  bool waypoint_reached;
+  int victim_stop_counter;
+  double victim_x, victim_y;
 } RobotContext;
 
-static double belief[GRID_SIZE][GRID_SIZE];
-
+//Helper Functions
 static double normalize_angle(double angle) {
   while (angle > M_PI)
     angle -= 2.0 * M_PI;
@@ -106,6 +141,7 @@ static double distance_to_point(Pose pose, double x, double y) {
   return sqrt(dx * dx + dy * dy);
 }
 
+// drive_to_target function
 static void drive_to_target(Motors motors, Pose pose, double target_x, double target_y) {
   double dx = target_x - pose.x, dy = target_y - pose.y;
   double distance = sqrt(dx * dx + dy * dy);
@@ -126,62 +162,7 @@ static void drive_to_target(Motors motors, Pose pose, double target_x, double ta
   }
 }
 
-/* Markov localization functions */
-static void markov_init() {
-  double uniform = 1.0 / (GRID_SIZE * GRID_SIZE);
-  for (int i = 0; i < GRID_SIZE; i++)
-    for (int j = 0; j < GRID_SIZE; j++)
-      belief[i][j] = uniform;
-}
-
-static void normalize_belief() {
-  double total = 0.0;
-  for (int i = 0; i < GRID_SIZE; i++)
-    for (int j = 0; j < GRID_SIZE; j++)
-      total += belief[i][j];
-  for (int i = 0; i < GRID_SIZE; i++)
-    for (int j = 0; j < GRID_SIZE; j++)
-      belief[i][j] /= total;
-}
-
-static int world_to_grid(double val, double min_v, double max_v) {
-  double r = (val - min_v) / (max_v - min_v);
-  int idx = (int)(r * GRID_SIZE);
-  return idx < 0 ? 0 : (idx >= GRID_SIZE ? GRID_SIZE - 1 : idx);
-}
-
-static void markov_step(Pose pose) {
-  static double temp[GRID_SIZE][GRID_SIZE];
-  for (int i = 0; i < GRID_SIZE; i++)
-    for (int j = 0; j < GRID_SIZE; j++)
-      temp[i][j] = 0.0;
-
-  int dx = (int)round(cos(pose.heading)), dy = (int)round(sin(pose.heading));
-  for (int i = 0; i < GRID_SIZE; i++) {
-    for (int j = 0; j < GRID_SIZE; j++) {
-      int nx = i + dx, ny = j + dy;
-      if (nx >= 0 && nx < GRID_SIZE && ny >= 0 && ny < GRID_SIZE)
-        temp[nx][ny] += belief[i][j];
-      else
-        temp[i][j] += belief[i][j];
-    }
-  }
-  for (int i = 0; i < GRID_SIZE; i++)
-    for (int j = 0; j < GRID_SIZE; j++)
-      belief[i][j] = temp[i][j];
-
-  int gx = world_to_grid(pose.x, WORLD_MIN_X, WORLD_MAX_X);
-  int gy = world_to_grid(pose.y, WORLD_MIN_Y, WORLD_MAX_Y);
-  for (int i = 0; i < GRID_SIZE; i++) {
-    for (int j = 0; j < GRID_SIZE; j++) {
-      double dist = sqrt((gx - i) * (gx - i) + (gy - j) * (gy - j));
-      belief[i][j] *= exp(-dist * 1.5);
-    }
-  }
-  normalize_belief();
-}
-
-// identify and set the next waypoint for traversal
+// set_next_waypoint function
 static bool set_next_waypoint(RobotContext *ctx) {
   if (ctx->current_waypoint < NUM_WAYPOINTS) {
     ctx->target_x = WAYPOINTS[ctx->current_waypoint][0];
@@ -193,6 +174,272 @@ static bool set_next_waypoint(RobotContext *ctx) {
   return false;
 }
 
+// SLAM: Markov localization
+static void markov_init(void) {
+  double uniform = 1.0 / (GRID_SIZE * GRID_SIZE);
+  for (int i = 0; i < GRID_SIZE; i++)
+    for (int j = 0; j < GRID_SIZE; j++)
+      belief[i][j] = uniform;
+}
+
+static void normalize_belief(void) {
+  double total = 0.0;
+  for (int i = 0; i < GRID_SIZE; i++)
+    for (int j = 0; j < GRID_SIZE; j++)
+      total += belief[i][j];
+
+  if (total <= 0.0) {
+    markov_init();
+    return;
+  }
+
+  for (int i = 0; i < GRID_SIZE; i++)
+    for (int j = 0; j < GRID_SIZE; j++)
+      belief[i][j] /= total;
+}
+
+static int world_to_grid(double val, double min_v, double max_v) {
+  double r = (val - min_v) / (max_v - min_v);
+  int idx = (int)(r * GRID_SIZE);
+  if (idx < 0) idx = 0;
+  if (idx >= GRID_SIZE) idx = GRID_SIZE - 1;
+  return idx;
+}
+
+static void markov_step(Pose pose) {
+  static double temp[GRID_SIZE][GRID_SIZE];
+  memset(temp, 0, sizeof(temp));
+
+  int dx = (int)round(cos(pose.heading));
+  int dy = (int)round(sin(pose.heading));
+
+  for (int i = 0; i < GRID_SIZE; i++) {
+    for (int j = 0; j < GRID_SIZE; j++) {
+      int nx = i + dx, ny = j + dy;
+      if (nx >= 0 && nx < GRID_SIZE && ny >= 0 && ny < GRID_SIZE)
+        temp[nx][ny] += belief[i][j];
+      else
+        temp[i][j] += belief[i][j];
+    }
+  }
+
+  memcpy(belief, temp, sizeof(belief));
+
+  int gx = world_to_grid(pose.x, WORLD_MIN_X, WORLD_MAX_X);
+  int gy = world_to_grid(pose.y, WORLD_MIN_Y, WORLD_MAX_Y);
+
+  for (int i = 0; i < GRID_SIZE; i++) {
+    for (int j = 0; j < GRID_SIZE; j++) {
+      double dist = sqrt((gx - i) * (gx - i) + (gy - j) * (gy - j));
+      belief[i][j] *= exp(-dist * 1.5);
+    }
+  }
+  normalize_belief();
+}
+
+// SLAM: Occupancy grid mapping
+static void map_init(void) {
+  for (int i = 0; i < MAP_SIZE; i++)
+    for (int j = 0; j < MAP_SIZE; j++)
+      map_grid[i][j] = -1.0;  
+}
+
+static int world_to_map_x(double x) {
+  double r = (x - WORLD_MIN_X) / (WORLD_MAX_X - WORLD_MIN_X);
+  int idx = (int)(r * MAP_SIZE);
+  if (idx < 0) idx = 0;
+  if (idx >= MAP_SIZE) idx = MAP_SIZE - 1;
+  return idx;
+}
+
+static int world_to_map_y(double y) {
+  double r = (y - WORLD_MIN_Y) / (WORLD_MAX_Y - WORLD_MIN_Y);
+  int idx = (int)(r * MAP_SIZE);
+  if (idx < 0) idx = 0;
+  if (idx >= MAP_SIZE) idx = MAP_SIZE - 1;
+  return idx;
+}
+
+static double ir_raw_to_dist(double raw) {
+  double d = 0.4 * (1.0 - raw / 154.0);
+  if (d < 0.0) d = 0.0;
+  if (d > 0.4) d = 0.4;
+  return d;
+}
+
+static void update_map_ray(double rx, double ry, double angle, double dist) {
+  const double step = 0.05;
+  const double max_range = 0.4;
+
+  // Mark free space along the way
+  for (double d = 0.0; d < dist && d < max_range; d += step) {
+    double wx = rx + d * cos(angle);
+    double wy = ry + d * sin(angle);
+    int mx = world_to_map_x(wx);
+    int my = world_to_map_y(wy);
+
+    double val = map_grid[mx][my];
+    if (val < 0.0) val = 0.5;
+    val -= 0.05;
+    if (val < 0.0) val = 0.0;
+    map_grid[mx][my] = val;
+  }
+
+  // Mark obstacle at endpoint
+  if (dist < max_range) {
+    double wx = rx + dist * cos(angle);
+    double wy = ry + dist * sin(angle);
+    int mx = world_to_map_x(wx);
+    int my = world_to_map_y(wy);
+    map_grid[mx][my] = 1.0;
+  }
+}
+
+static void update_map_from_sensors(Pose pose, WbDeviceTag ds0, WbDeviceTag ds1, 
+                                     WbDeviceTag ds2, WbDeviceTag ds3) {
+  if (!ds0 || !ds1 || !ds2 || !ds3) return;
+
+  double raw0 = wb_distance_sensor_get_value(ds0);
+  double raw1 = wb_distance_sensor_get_value(ds1);
+  double raw2 = wb_distance_sensor_get_value(ds2);
+  double raw3 = wb_distance_sensor_get_value(ds3);
+
+  double d0 = ir_raw_to_dist(raw0);
+  double d1 = ir_raw_to_dist(raw1);
+  double d2 = ir_raw_to_dist(raw2);
+  double d3 = ir_raw_to_dist(raw3);
+
+  update_map_ray(pose.x, pose.y, pose.heading, d0);
+  update_map_ray(pose.x, pose.y, pose.heading + M_PI_2, d1);
+  update_map_ray(pose.x, pose.y, pose.heading + M_PI, d2);
+  update_map_ray(pose.x, pose.y, pose.heading - M_PI_2, d3);
+}
+
+// function for printing the grid map status
+static void print_map(void) {
+  printf("\n--- MAP GRID ---\n");
+  for (int j = MAP_SIZE - 1; j >= 0; j--) {
+    for (int i = 0; i < MAP_SIZE; i++) {
+      double v = map_grid[i][j];
+      char c = '?';
+      if (v < 0.0) c = '?';
+      else if (v < 0.3) c = '.';
+      else if (v > 0.7) c = '#';
+      else c = '~';
+      printf("%c", c);
+    }
+    printf("\n");
+  }
+  printf("--------------------\n");
+}
+
+// Victim Detection and Storage
+static bool detect_green_victim(WbDeviceTag camera, int *debug_r, int *debug_g, int *debug_b, int *debug_green_pixels, int *debug_total) {
+  if (!camera) return false;
+  
+  const unsigned char *image = wb_camera_get_image(camera);
+  if (!image) return false;
+  
+  int w = wb_camera_get_width(camera);
+  int h = wb_camera_get_height(camera);
+  int cx = w / 2;
+  int cy = h / 2;
+  
+  // Sample center region of camera
+  int green_pixels = 0;
+  int total_pixels = 0;
+  int avg_r = 0, avg_g = 0, avg_b = 0;
+  
+  int sample_radius = 15;  
+  for (int dy = -sample_radius; dy <= sample_radius; dy++) {
+    for (int dx = -sample_radius; dx <= sample_radius; dx++) {
+      int x = cx + dx;
+      int y = cy + dy;
+      if (x < 0 || x >= w || y < 0 || y >= h) continue;
+      
+      int r = wb_camera_image_get_red(image, w, x, y);
+      int g = wb_camera_image_get_green(image, w, x, y);
+      int b = wb_camera_image_get_blue(image, w, x, y);
+      
+      avg_r += r;
+      avg_g += g;
+      avg_b += b;
+      total_pixels++;
+      
+      // Check if pixel is green: green channel dominant and above threshold
+      if (g > GREEN_THRESHOLD_MIN && 
+          g > r + GREEN_DOMINANCE && 
+          g > b + GREEN_DOMINANCE) {
+        green_pixels++;
+      }
+    }
+  }
+  
+  if (total_pixels > 0) {
+    *debug_r = avg_r / total_pixels;
+    *debug_g = avg_g / total_pixels;
+    *debug_b = avg_b / total_pixels;
+  }
+  *debug_green_pixels = green_pixels;
+  *debug_total = total_pixels;
+  
+  // Return true if significant portion of center is green
+  double green_ratio = (double)green_pixels / total_pixels;
+  return (green_ratio > GREEN_RATIO_THRESHOLD);
+}
+
+static bool is_victim_already_found(double x, double y) {
+  for (int i = 0; i < victim_count; i++) {
+    double dx = victims[i].x - x;
+    double dy = victims[i].y - y;
+    double dist = sqrt(dx * dx + dy * dy);
+    if (dist < 0.3) { 
+      return true;
+    }
+  }
+  return false;
+}
+
+static void store_victim(double x, double y) {
+  if (victim_count >= MAX_VICTIMS) {
+    printf("[VICTIM] Warning: Maximum victims reached, cannot store more\n");
+    return;
+  }
+  
+  if (is_victim_already_found(x, y)) {
+    printf("[VICTIM] Victim at (%.2f, %.2f) already recorded\n", x, y);
+    return;
+  }
+  
+  // Store victim world coordinates
+  victims[victim_count].x = x;
+  victims[victim_count].y = y;
+  
+  // Calculate and store grid position
+  int gx = world_to_grid(x, WORLD_MIN_X, WORLD_MAX_X);
+  int gy = world_to_grid(y, WORLD_MIN_Y, WORLD_MAX_Y);
+  victims[victim_count].grid_x = gx;
+  victims[victim_count].grid_y = gy;
+  
+  // Mark victim location in belief grid with high value
+  belief[gx][gy] = 2.0;  // Special marker for victim
+  
+  victim_count++;
+  printf("[VICTIM] *** NEW VICTIM STORED ***\n");
+  printf("[VICTIM] Victim #%d at world (%.2f, %.2f), grid (%d, %d)\n", 
+         victim_count, x, y, gx, gy);
+}
+
+static void print_victims(void) {
+  printf("\n--- VICTIMS FOUND: %d ---\n", victim_count);
+  for (int i = 0; i < victim_count; i++) {
+    printf("  Victim #%d: world (%.2f, %.2f), grid (%d, %d)\n",
+           i + 1, victims[i].x, victims[i].y, victims[i].grid_x, victims[i].grid_y);
+  }
+  printf("-------------------------\n");
+}
+
+// Main Function 
 int main(int argc, char **argv) {
   wb_robot_init();
   const int timeStep = wb_robot_get_basic_time_step();
@@ -207,6 +454,7 @@ int main(int argc, char **argv) {
   bool mode_selected = false;
   while (wb_robot_step(timeStep) != -1 && !mode_selected) {
     int key = wb_keyboard_get_key();
+    // Available Options
     if (key == '1') {
       mode = MODE_KEYBOARD;
       mode_selected = true;
@@ -215,7 +463,7 @@ int main(int argc, char **argv) {
     else if (key == '2') {
       mode = MODE_AUTONOMOUS;
       mode_selected = true;
-      printf("Mode: Autonomous waypoint navigation\n");
+      printf("Mode: Autonomous waypoint navigation with SLAM\n");
     }
   }
 
@@ -230,13 +478,34 @@ int main(int argc, char **argv) {
   set_motor_speeds(motors, 0, 0);
 
   WbDeviceTag front_ds = 0, camera = 0;
+  WbDeviceTag ds0 = 0, ds1 = 0, ds2 = 0, ds3 = 0;
+
+  // Initialize SLAM
+  markov_init();
+  map_init();
+
+  // Enable camera for both modes (needed for victim detection)
+  // Try front-facing camera first, ground cam for backup
+  camera = wb_robot_get_device("camera");
+  if (!camera) {
+    camera = wb_robot_get_device("front_camera");
+  }
+  if (!camera) {
+    camera = wb_robot_get_device("cam");
+  }
+  if (!camera) {
+    camera = wb_robot_get_device("ground_cam");
+  }
+  
+  if (camera) {
+    wb_camera_enable(camera, timeStep);
+    printf("Camera enabled for victim detection\n");
+  } else {
+    printf("WARNING: No camera found for victim detection!\n");
+  }
 
   if (mode == MODE_KEYBOARD) {
-    camera = wb_robot_get_device("ground_cam");
-    if (camera)
-      wb_camera_enable(camera, timeStep);
-    markov_init();
-    printf("\nKeyboard mode: W=forward, S=backward, A=left, D=right\n");
+    printf("\nKeyboard mode: W=forward, S=backward, A=left, D=right, M=print map, V=print victims\n");
   }
   else {
     front_ds = wb_robot_get_device("ds0");
@@ -248,42 +517,70 @@ int main(int argc, char **argv) {
     for (int i = 0; i < NUM_WAYPOINTS; i++) {
       printf("  %d: (%.2f, %.2f)\n", i + 1, WAYPOINTS[i][0], WAYPOINTS[i][1]);
     }
+    printf("\nGreen victim detection ENABLED\n");
     printf("\n");
   }
 
+  // Enable all distance sensors for SLAM mapping
+  ds0 = wb_robot_get_device("ds0");
+  ds1 = wb_robot_get_device("ds1");
+  ds2 = wb_robot_get_device("ds2");
+  ds3 = wb_robot_get_device("ds3");
+  if (ds0) wb_distance_sensor_enable(ds0, timeStep);
+  if (ds1) wb_distance_sensor_enable(ds1, timeStep);
+  if (ds2) wb_distance_sensor_enable(ds2, timeStep);
+  if (ds3) wb_distance_sensor_enable(ds3, timeStep);
+
   RobotContext ctx = {
-    .state = STATE_INIT, 
+    .state = STATE_INIT,
+    .prev_state = STATE_INIT,
     .current_waypoint = 0,
     .obstacle_frames = 0,
     .pause_counter = 0,
-    .waypoint_reached = false
+    .waypoint_reached = false,
+    .victim_stop_counter = 0,
+    .victim_x = 0,
+    .victim_y = 0
   };
   int init_counter = 0;
+  int map_print_counter = 0;
+  int victim_debug_counter = 0;
 
   while (wb_robot_step(timeStep) != -1) {
     Pose pose = get_robot_pose(gps, compass);
 
+    // SLAM updates - run every step
+    markov_step(pose);
+    update_map_from_sensors(pose, ds0, ds1, ds2, ds3);
+
+    // Check for map print request
+    int key = wb_keyboard_get_key();
+    if (key == 'M' || key == 'm') {
+      print_map();
+    }
+    if (key == 'V' || key == 'v') {
+      print_victims();
+    }
+
     if (mode == MODE_KEYBOARD) {
-      int key = wb_keyboard_get_key();
       double left_speed = 0, right_speed = 0;
-      if (key == 'W') {
+      if (key == 'W' || key == 'w') {
         left_speed = 0.3;
         right_speed = 0.3;
       }
-      else if (key == 'S') {
+      else if (key == 'S' || key == 's') {
         left_speed = -0.3;
         right_speed = -0.3;
       }
-      else if (key == 'A') {
+      else if (key == 'A' || key == 'a') {
         left_speed = -0.2;
         right_speed = 0.2;
       }
-      else if (key == 'D') {
+      else if (key == 'D' || key == 'd') {
         left_speed = 0.2;
         right_speed = -0.2;
       }
       set_motor_speeds(motors, left_speed, right_speed);
-      markov_step(pose);
 
       if (camera) {
         const unsigned char *image = wb_camera_get_image(camera);
@@ -296,10 +593,48 @@ int main(int argc, char **argv) {
         }
       }
     }
-    // autonomous waypoint navigation through coords
+    // Autonomous waypoint navigation - ORIGINAL STATE MACHINE UNCHANGED
     else 
     {
       double front_distance = front_ds ? wb_distance_sensor_get_value(front_ds) : 0;
+      
+      // Victim detection debug output (every ~0.5 seconds)
+      int debug_r = 0, debug_g = 0, debug_b = 0, debug_green_px = 0, debug_total_px = 0;
+      bool green_detected = detect_green_victim(camera, &debug_r, &debug_g, &debug_b, &debug_green_px, &debug_total_px);
+      
+      if (++victim_debug_counter >= 16) {
+        printf("[DEBUG] Cam RGB avg: R=%d G=%d B=%d | Green pixels: %d/%d | Detected: %s\n", 
+               debug_r, debug_g, debug_b, debug_green_px, debug_total_px,
+               green_detected ? "YES" : "no");
+        victim_debug_counter = 0;
+      }
+      
+      // Check for new victim (only in navigating states, not when already handling victim)
+      if (green_detected && 
+          ctx.state != STATE_VICTIM_DETECTED && 
+          ctx.state != STATE_INIT &&
+          ctx.state != STATE_COMPLETE &&
+          ctx.state != STATE_IDLE) {
+        
+        // Calculate victim position (in front of robot)
+        double victim_dist = 0.15;  // Approximate distance to victim
+        double vx = pose.x + victim_dist * cos(pose.heading);
+        double vy = pose.y + victim_dist * sin(pose.heading);
+        
+        if (!is_victim_already_found(vx, vy)) {
+          printf("\n[VICTIM] !!! GREEN VICTIM DETECTED !!!\n");
+          printf("[VICTIM] Robot at (%.2f, %.2f), heading %.2f rad\n", 
+                 pose.x, pose.y, pose.heading);
+          printf("[VICTIM] Estimated victim position: (%.2f, %.2f)\n", vx, vy);
+          
+          ctx.prev_state = ctx.state;
+          ctx.state = STATE_VICTIM_DETECTED;
+          ctx.victim_stop_counter = 0;
+          ctx.victim_x = vx;
+          ctx.victim_y = vy;
+          set_motor_speeds(motors, 0, 0);
+        }
+      }
 
       switch (ctx.state) {
       case STATE_INIT:
@@ -317,14 +652,33 @@ int main(int argc, char **argv) {
         set_motor_speeds(motors, 0, 0);
         break;
       
-      // completion state
+      case STATE_VICTIM_DETECTED:
+        set_motor_speeds(motors, 0, 0);  // Stay stopped
+        ctx.victim_stop_counter++;
+        
+        if (ctx.victim_stop_counter == 1) {
+          printf("[VICTIM] Robot stopped, looking at victim...\n");
+        }
+        
+        if (ctx.victim_stop_counter >= VICTIM_STOP_DURATION) {
+          // Store the victim
+          store_victim(ctx.victim_x, ctx.victim_y);
+          print_victims();
+          
+          printf("[VICTIM] Resuming navigation...\n\n");
+          ctx.state = ctx.prev_state;
+          ctx.victim_stop_counter = 0;
+        }
+        break;
+      
       case STATE_COMPLETE:
         set_motor_speeds(motors, 0, 0);
         printf("All waypoints completed! Robot stopped.\n");
+        print_map();
+        print_victims();
         ctx.state = STATE_IDLE; 
         break;
         
-      // coordinate based navigation system that follows a lawn mowing pattern
       case STATE_NAVIGATE:
       {
         double change = fabs(front_distance - ctx.prev_front_distance);
@@ -353,7 +707,6 @@ int main(int argc, char **argv) {
         break;
       }
       
-      // state for checking obstacles in the path
       case STATE_OBSTACLE_CHECK:
       {
         double change = fabs(front_distance - ctx.prev_front_distance);
@@ -387,12 +740,11 @@ int main(int argc, char **argv) {
         break;
       }
       
-      // detour or obtsacle avoidance state
       case STATE_AVOID_OBSTACLE:
         if (distance_to_point(pose, ctx.detour_x, ctx.detour_y) < TOLERANCE) {
           printf("Detour complete, resuming navigation to waypoint %d...\n", ctx.current_waypoint + 1);
           ctx.pause_counter = 0;
-          ctx.waypoint_reached = false; // indication for obstacle avoidance only and proceed to the originally set waypoints
+          ctx.waypoint_reached = false;
           set_motor_speeds(motors, 0, 0);
           ctx.state = STATE_PAUSE;
         }
@@ -401,7 +753,6 @@ int main(int argc, char **argv) {
         }
         break;
       
-      // pause state to pause a bit before continuing traversal
       case STATE_PAUSE:
         if (++ctx.pause_counter >= PAUSE_STEPS) {
           if (ctx.waypoint_reached) {
@@ -415,7 +766,6 @@ int main(int argc, char **argv) {
               ctx.state = STATE_COMPLETE;
             }
           }
-          // for detours we will continue to navigate to the previously set coordinates 
           else {
             printf("Resuming navigation to waypoint %d: (%.2f, %.2f)\n",
                    ctx.current_waypoint + 1, ctx.target_x, ctx.target_y);
@@ -423,6 +773,12 @@ int main(int argc, char **argv) {
           }
         }
         break;
+      }
+
+      // Print map periodically during autonomous mode
+      if (++map_print_counter >= 500) {
+        print_map();
+        map_print_counter = 0;
       }
     }
   }

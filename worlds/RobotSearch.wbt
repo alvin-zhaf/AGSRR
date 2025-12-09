@@ -23,15 +23,15 @@ WorldInfo {
   }
 }
 Viewpoint {
-  orientation 0.21088147268605523 0.8535105190282731 -0.47649637814557244 0.9567021289574087
-  position -2.4672838202492358 4.958788878051857 7.087821422591518
+  orientation 0.14029407917902723 0.9754338008928681 -0.16984249004004034 1.4052791492018488
+  position 0.6606238061480645 2.1824612350906003 8.798037173813402
 }
 TexturedBackground {
 }
 TexturedBackgroundLight {
 }
 SurveyorSrv1 {
-  translation 0.51 2.8 -0.01
+  translation 1.11 3.32 -0.01
   controller "surveyor"
   extensionSlot [
     DEF receiver Receiver {
@@ -80,7 +80,7 @@ Rock {
   scale 3
 }
 Rock {
-  translation 2.09 2.86 0.05
+  translation 2.34 3.5 0.05
   name "rock(1)"
   scale 3
 }
@@ -125,7 +125,7 @@ DEF victim3 RescueVictimFaceUp {
   shirtColor 0 0.8 0
 }
 DEF victim2 RescueVictimFaceUp {
-  translation 2.33051 3.20051 0.01
+  translation 2.11134 3.41968 0.01
   rotation 0 0 1 0.785398
   scale 0.25 0.25 0.25
   shirtColor 0 0.8 0
