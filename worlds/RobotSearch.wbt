@@ -23,8 +23,8 @@ WorldInfo {
   }
 }
 Viewpoint {
-  orientation 0.14029407917902723 0.9754338008928681 -0.16984249004004034 1.4052791492018488
-  position 0.6606238061480645 2.1824612350906003 8.798037173813402
+  orientation 0.3226126545833255 0.7415603163534104 -0.5882256134448156 1.2736018401100835
+  position -0.5585100980365697 5.347805726807294 6.1466642577724215
 }
 TexturedBackground {
 }
@@ -80,7 +80,7 @@ Rock {
   scale 3
 }
 Rock {
-  translation 2.34 3.5 0.05
+  translation 2.18 3.42 0.05
   name "rock(1)"
   scale 3
 }
@@ -95,7 +95,7 @@ Rock {
   scale 3
 }
 Rock {
-  translation 3.85 1.33 0.12
+  translation 3.46 1.49 0.12
   name "rock(5)"
   scale 3
 }
@@ -125,8 +125,8 @@ DEF victim3 RescueVictimFaceUp {
   shirtColor 0 0.8 0
 }
 DEF victim2 RescueVictimFaceUp {
-  translation 2.11134 3.41968 0.01
-  rotation 0 0 1 0.785398
+  translation 1.90529 3.34363 0.01
+  rotation 0 0 1 4.692820414042842e-06
   scale 0.25 0.25 0.25
   shirtColor 0 0.8 0
 }

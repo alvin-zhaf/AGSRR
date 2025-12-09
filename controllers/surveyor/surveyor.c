@@ -12,9 +12,7 @@
 #include <webots/keyboard.h>
 #include <webots/camera.h>
 
-// ----------------------------
-// Movement constants (from original)
-// ----------------------------
+// Movement constants 
 #define MAX_SPEED 0.25
 #define TOLERANCE 0.05
 #define SLOW_DOWN_DISTANCE 1.0
@@ -23,9 +21,7 @@
 #define TERRAIN_MAX_CHANGE 70.0
 #define PAUSE_STEPS 50
 
-// ----------------------------
 // SLAM / Mapping constants
-// ----------------------------
 #define MAP_SIZE 20
 #define WORLD_MIN_X  0.1
 #define WORLD_MAX_X  4.0
@@ -42,7 +38,7 @@
 #define GREEN_DOMINANCE 15
 #define GREEN_RATIO_THRESHOLD 0.10
 
-// Predefined waypoints (from original)
+// Predefined waypoints 
 #define NUM_WAYPOINTS 9
 static const double WAYPOINTS[NUM_WAYPOINTS][2] = {
   {3.36, 2.86},
@@ -80,6 +76,7 @@ typedef enum {
   STATE_NAVIGATE,
   STATE_OBSTACLE_CHECK,
   STATE_AVOID_OBSTACLE,
+  STATE_SLAM_DETOUR,
   STATE_PAUSE,
   STATE_VICTIM_DETECTED,
   STATE_IDLE,
@@ -106,9 +103,13 @@ typedef struct {
   bool waypoint_reached;
   int victim_stop_counter;
   double victim_x, victim_y;
+  // SLAM detour fields
+  double slam_detour_x, slam_detour_y;
+  double original_target_x, original_target_y;
+  int path_check_counter;
 } RobotContext;
 
-//Helper Functions
+// Helper functions
 static double normalize_angle(double angle) {
   while (angle > M_PI)
     angle -= 2.0 * M_PI;
@@ -162,7 +163,7 @@ static void drive_to_target(Motors motors, Pose pose, double target_x, double ta
   }
 }
 
-// set_next_waypoint function
+// set_next_waypoint 
 static bool set_next_waypoint(RobotContext *ctx) {
   if (ctx->current_waypoint < NUM_WAYPOINTS) {
     ctx->target_x = WAYPOINTS[ctx->current_waypoint][0];
@@ -174,7 +175,7 @@ static bool set_next_waypoint(RobotContext *ctx) {
   return false;
 }
 
-// SLAM: Markov localization
+// SLAM: Markov localization 
 static void markov_init(void) {
   double uniform = 1.0 / (GRID_SIZE * GRID_SIZE);
   for (int i = 0; i < GRID_SIZE; i++)
@@ -295,6 +296,7 @@ static void update_map_ray(double rx, double ry, double angle, double dist) {
   }
 }
 
+// function for updating map coordinates
 static void update_map_from_sensors(Pose pose, WbDeviceTag ds0, WbDeviceTag ds1, 
                                      WbDeviceTag ds2, WbDeviceTag ds3) {
   if (!ds0 || !ds1 || !ds2 || !ds3) return;
@@ -315,7 +317,7 @@ static void update_map_from_sensors(Pose pose, WbDeviceTag ds0, WbDeviceTag ds1,
   update_map_ray(pose.x, pose.y, pose.heading - M_PI_2, d3);
 }
 
-// function for printing the grid map status
+// function for printing map in a grid like format
 static void print_map(void) {
   printf("\n--- MAP GRID ---\n");
   for (int j = MAP_SIZE - 1; j >= 0; j--) {
@@ -350,7 +352,7 @@ static bool detect_green_victim(WbDeviceTag camera, int *debug_r, int *debug_g, 
   int total_pixels = 0;
   int avg_r = 0, avg_g = 0, avg_b = 0;
   
-  int sample_radius = 15;  
+  int sample_radius = 15;  // Larger sample area
   for (int dy = -sample_radius; dy <= sample_radius; dy++) {
     for (int dx = -sample_radius; dx <= sample_radius; dx++) {
       int x = cx + dx;
@@ -366,7 +368,7 @@ static bool detect_green_victim(WbDeviceTag camera, int *debug_r, int *debug_g, 
       avg_b += b;
       total_pixels++;
       
-      // Check if pixel is green: green channel dominant and above threshold
+      // check pixel colors if green increase the sensitivity for the detection
       if (g > GREEN_THRESHOLD_MIN && 
           g > r + GREEN_DOMINANCE && 
           g > b + GREEN_DOMINANCE) {
@@ -393,7 +395,7 @@ static bool is_victim_already_found(double x, double y) {
     double dx = victims[i].x - x;
     double dy = victims[i].y - y;
     double dist = sqrt(dx * dx + dy * dy);
-    if (dist < 0.3) { 
+    if (dist < 0.3) {  // Within 30cm of known victim
       return true;
     }
   }
@@ -439,7 +441,132 @@ static void print_victims(void) {
   printf("-------------------------\n");
 }
 
-// Main Function 
+// SLAM-Based Path Planning
+#define PATH_CHECK_DISTANCE 0.5
+#define PATH_CHECK_STEP 0.05
+#define OCCUPIED_THRESHOLD 0.6
+#define DETOUR_OFFSET 0.3
+
+// Check if a specific map cell is occupied
+static bool is_cell_occupied(int mx, int my) {
+  if (mx < 0 || mx >= MAP_SIZE || my < 0 || my >= MAP_SIZE) {
+    return true;  // Out of bounds treated as occupied
+  }
+  return map_grid[mx][my] > OCCUPIED_THRESHOLD;
+}
+
+// Check path from current position toward target, up to PATH_CHECK_DISTANCE
+// Returns true if path is blocked, and sets obstacle_x, obstacle_y to obstacle location
+static bool check_path_blocked(Pose pose, double target_x, double target_y, 
+                                double *obstacle_x, double *obstacle_y) {
+  double dx = target_x - pose.x;
+  double dy = target_y - pose.y;
+  double dist = sqrt(dx * dx + dy * dy);
+  
+  if (dist < 0.01) return false;  // Already at target
+  
+  // Normalize direction
+  double dir_x = dx / dist;
+  double dir_y = dy / dist;
+  
+  // Check up to PATH_CHECK_DISTANCE or until target
+  double check_dist = (dist < PATH_CHECK_DISTANCE) ? dist : PATH_CHECK_DISTANCE;
+  
+  for (double d = 0.1; d <= check_dist; d += PATH_CHECK_STEP) {
+    double wx = pose.x + d * dir_x;
+    double wy = pose.y + d * dir_y;
+    
+    int mx = world_to_map_x(wx);
+    int my = world_to_map_y(wy);
+    
+    if (is_cell_occupied(mx, my)) {
+      *obstacle_x = wx;
+      *obstacle_y = wy;
+      printf("[SLAM] Path blocked at (%.2f, %.2f) - map cell (%d, %d) = %.2f\n",
+             wx, wy, mx, my, map_grid[mx][my]);
+      return true;
+    }
+  }
+  
+  return false;
+}
+
+// Check if a detour point is clear (not occupied)
+static bool is_detour_clear(double x, double y) {
+  int mx = world_to_map_x(x);
+  int my = world_to_map_y(y);
+  
+  // Check the cell and immediate neighbors
+  for (int di = -1; di <= 1; di++) {
+    for (int dj = -1; dj <= 1; dj++) {
+      if (is_cell_occupied(mx + di, my + dj)) {
+        return false;
+      }
+    }
+  }
+  return true;
+}
+
+// Calculate detour waypoint to avoid obstacle
+// Returns true if detour found, false if no clear path
+static bool calculate_detour(Pose pose, double target_x, double target_y,
+                             double obstacle_x, double obstacle_y,
+                             double *detour_x, double *detour_y) {
+  // Direction to target
+  double dx = target_x - pose.x;
+  double dy = target_y - pose.y;
+  double dist = sqrt(dx * dx + dy * dy);
+  
+  if (dist < 0.01) return false;
+  
+  // Perpendicular directions (left and right)
+  double perp_left_x = -dy / dist;
+  double perp_left_y = dx / dist;
+  double perp_right_x = dy / dist;
+  double perp_right_y = -dx / dist;
+  
+  // Calculate potential detour points
+  double left_x = obstacle_x + DETOUR_OFFSET * perp_left_x;
+  double left_y = obstacle_y + DETOUR_OFFSET * perp_left_y;
+  double right_x = obstacle_x + DETOUR_OFFSET * perp_right_x;
+  double right_y = obstacle_y + DETOUR_OFFSET * perp_right_y;
+  
+  bool left_clear = is_detour_clear(left_x, left_y);
+  bool right_clear = is_detour_clear(right_x, right_y);
+  
+  printf("[SLAM] Detour options - Left (%.2f, %.2f): %s, Right (%.2f, %.2f): %s\n",
+         left_x, left_y, left_clear ? "CLEAR" : "blocked",
+         right_x, right_y, right_clear ? "CLEAR" : "blocked");
+  
+  if (left_clear && right_clear) {
+    // Both clear - 50/50 random choice
+    if (rand() % 2 == 0) {
+      *detour_x = left_x;
+      *detour_y = left_y;
+      printf("[SLAM] Randomly chose LEFT detour\n");
+    } else {
+      *detour_x = right_x;
+      *detour_y = right_y;
+      printf("[SLAM] Randomly chose RIGHT detour\n");
+    }
+    return true;
+  } else if (left_clear) {
+    *detour_x = left_x;
+    *detour_y = left_y;
+    printf("[SLAM] Chose LEFT detour (right blocked)\n");
+    return true;
+  } else if (right_clear) {
+    *detour_x = right_x;
+    *detour_y = right_y;
+    printf("[SLAM] Chose RIGHT detour (left blocked)\n");
+    return true;
+  }
+  
+  printf("[SLAM] WARNING: No clear detour found!\n");
+  return false;
+}
+
+// MAIN function
 int main(int argc, char **argv) {
   wb_robot_init();
   const int timeStep = wb_robot_get_basic_time_step();
@@ -452,9 +579,9 @@ int main(int argc, char **argv) {
 
   RobotMode mode = MODE_AUTONOMOUS;
   bool mode_selected = false;
+  // List of available mode options
   while (wb_robot_step(timeStep) != -1 && !mode_selected) {
     int key = wb_keyboard_get_key();
-    // Available Options
     if (key == '1') {
       mode = MODE_KEYBOARD;
       mode_selected = true;
@@ -463,7 +590,7 @@ int main(int argc, char **argv) {
     else if (key == '2') {
       mode = MODE_AUTONOMOUS;
       mode_selected = true;
-      printf("Mode: Autonomous waypoint navigation with SLAM\n");
+      printf("Mode: Autonomous waypoint navigation\n");
     }
   }
 
@@ -484,8 +611,8 @@ int main(int argc, char **argv) {
   markov_init();
   map_init();
 
-  // Enable camera for both modes (needed for victim detection)
-  // Try front-facing camera first, ground cam for backup
+  // Enable camera for both modes
+  // Try front-facing camera first, fall back to ground_cam if fail
   camera = wb_robot_get_device("camera");
   if (!camera) {
     camera = wb_robot_get_device("front_camera");
@@ -540,11 +667,19 @@ int main(int argc, char **argv) {
     .waypoint_reached = false,
     .victim_stop_counter = 0,
     .victim_x = 0,
-    .victim_y = 0
+    .victim_y = 0,
+    .slam_detour_x = 0,
+    .slam_detour_y = 0,
+    .original_target_x = 0,
+    .original_target_y = 0,
+    .path_check_counter = 0
   };
   int init_counter = 0;
   int map_print_counter = 0;
   int victim_debug_counter = 0;
+  
+  // Seed random for 50/50 detour choice
+  srand(42);
 
   while (wb_robot_step(timeStep) != -1) {
     Pose pose = get_robot_pose(gps, compass);
@@ -593,12 +728,12 @@ int main(int argc, char **argv) {
         }
       }
     }
-    // Autonomous waypoint navigation - ORIGINAL STATE MACHINE UNCHANGED
+    // Autonomous waypoint navigation
     else 
     {
       double front_distance = front_ds ? wb_distance_sensor_get_value(front_ds) : 0;
       
-      // Victim detection debug output (every ~0.5 seconds)
+      // Victim detection
       int debug_r = 0, debug_g = 0, debug_b = 0, debug_green_px = 0, debug_total_px = 0;
       bool green_detected = detect_green_victim(camera, &debug_r, &debug_g, &debug_b, &debug_green_px, &debug_total_px);
       
@@ -609,14 +744,15 @@ int main(int argc, char **argv) {
         victim_debug_counter = 0;
       }
       
-      // Check for new victim (only in navigating states, not when already handling victim)
+      // Check for new victim 
       if (green_detected && 
           ctx.state != STATE_VICTIM_DETECTED && 
           ctx.state != STATE_INIT &&
           ctx.state != STATE_COMPLETE &&
-          ctx.state != STATE_IDLE) {
+          ctx.state != STATE_IDLE &&
+          ctx.state != STATE_PAUSE) {
         
-        // Calculate victim position (in front of robot)
+        // Calculate victim position 
         double victim_dist = 0.15;  // Approximate distance to victim
         double vx = pose.x + victim_dist * cos(pose.heading);
         double vy = pose.y + victim_dist * sin(pose.heading);
@@ -694,6 +830,35 @@ int main(int argc, char **argv) {
           set_motor_speeds(motors, 0, 0);
           ctx.state = STATE_PAUSE;
         }
+        // path checking using SLAM, set to once every 10 steps preventing overload/spamming
+        else if (++ctx.path_check_counter >= 10) {
+          ctx.path_check_counter = 0;
+          
+          double obstacle_x, obstacle_y;
+          if (check_path_blocked(pose, ctx.target_x, ctx.target_y, &obstacle_x, &obstacle_y)) {
+            double detour_x, detour_y;
+            if (calculate_detour(pose, ctx.target_x, ctx.target_y, 
+                                 obstacle_x, obstacle_y, &detour_x, &detour_y)) {
+              printf("[SLAM] Inserting detour waypoint (%.2f, %.2f) before target (%.2f, %.2f)\n",
+                     detour_x, detour_y, ctx.target_x, ctx.target_y);
+              
+              // Save original target
+              ctx.original_target_x = ctx.target_x;
+              ctx.original_target_y = ctx.target_y;
+              
+              // Set detour as immediate target
+              ctx.slam_detour_x = detour_x;
+              ctx.slam_detour_y = detour_y;
+              
+              ctx.state = STATE_SLAM_DETOUR;
+            } else {
+              // No clear detour, fall back to reactive obstacle avoidance
+              drive_to_target(motors, pose, ctx.target_x, ctx.target_y);
+            }
+          } else {
+            drive_to_target(motors, pose, ctx.target_x, ctx.target_y);
+          }
+        }
         else if (change <= TERRAIN_MAX_CHANGE && front_distance > OBSTACLE_THRESHOLD)
         {
           ctx.obstacle_frames = 1;
@@ -703,6 +868,26 @@ int main(int argc, char **argv) {
         {
           ctx.obstacle_frames = 0;
           drive_to_target(motors, pose, ctx.target_x, ctx.target_y);
+        }
+        break;
+      }
+      
+      case STATE_SLAM_DETOUR:
+      {
+        // Navigate to SLAM-calculated detour point
+        double dist_to_detour = distance_to_point(pose, ctx.slam_detour_x, ctx.slam_detour_y);
+        
+        if (dist_to_detour < TOLERANCE) {
+          printf("[SLAM] Detour point reached, resuming to original target (%.2f, %.2f)\n",
+                 ctx.original_target_x, ctx.original_target_y);
+          
+          // Restore original target
+          ctx.target_x = ctx.original_target_x;
+          ctx.target_y = ctx.original_target_y;
+          ctx.path_check_counter = 0;
+          ctx.state = STATE_NAVIGATE;
+        } else {
+          drive_to_target(motors, pose, ctx.slam_detour_x, ctx.slam_detour_y);
         }
         break;
       }
