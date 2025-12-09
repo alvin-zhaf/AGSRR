@@ -18,11 +18,11 @@
 
 \title{Improving Search and Rescue Response Times by Using Aerial-Supported Ground Search and Rescue Robots}
 
-\author{Edward Silvey, Alfian Fadhlurrahman, Shailee Kampani, Alvin Zhafif Afilla}
+\author{Edward J. Silvey, Alfian Fadhlurrahman, Shailee D. Kampani, Alvin Zhafif Afilla}
 
 % The paper headers
 \markboth{University of Birmingham Intelligent Robotics}
-{Edward Silvey, Alfian Fadhlurrahman, Shailee Kampani, Alvin Zhafif Afilla,\MakeLowercase{\textit{(et al.)}:Aerial-supported Ground Search and Rescue Robot}}
+{Edward J. Silvey, Alfian Fadhlurrahman, Shailee D. Kampani, Alvin Zhafif Afilla,\MakeLowercase{\textit{(et al.)}:Aerial-supported Ground Search and Rescue Robot}}
 
 \maketitle
 
@@ -35,11 +35,9 @@ Aerial Systems: Applications; Multi-Robot Systems; Search and Rescue Robots
 \end{IEEEkeywords}
 
 \section{Introduction}
-The \IEEEPARstart{T}{his} section will outline and act as the introduction of the paper.
-It will describe the problem as we did the the proposal.
-Describe current solutions and their problems.
-Maybe what other people have tried to do if we can find anything.
-And our hypothesis that the drone will assist and compare to the rover only.
+\IEEEPARstart{S}{earch} and rescue requires finding as many victims of disasters as fast as possible.  Both ground and aerial search and rescue robots have become commonly used strategies individually in order to improve search and rescue \cite{UGVs are Useful, UAVs are Useful}. Both of these methods though, have their downsides along with their upsides.  Unmanned Aerial Vehicles (UAVs) are able to provide a coverage of a wide area quickly whilst avoiding any obstacles on the ground, but are largely unable to provide help to victims once found.  Unmanned Ground Vehicles (UGVs) however, are able to provide the assistance once they find the victim, but have to avoid obstacles on the ground.
+\par There has been extensive research on multi-robot systems for search and rescue purposes \cite{MRS approach to SAR, UAVs planning UGVs paths} and how best they can be coordinated \cite{UAV-UGV Coordination}.
+\par Combining the two methods could lead to a quicker response times and more victims being found successfully, thus improving search and rescue overall.
 
 \section{Methods}
 A brief intro to the methods summary outlining the different sections and that they are outlined below.
@@ -47,7 +45,7 @@ A brief intro to the methods summary outlining the different sections and that t
 \subsection{Drone Movement and Flight Control}
 \begin{itemize}
     \item{Take off and landing}
-    \item{How flight path was assigned}
+    \item{How flight path was assigned - hard-coded points}
     \item{How points are reached}
 \end{itemize}
 
@@ -87,9 +85,27 @@ Any Limitations
 
 \begin{thebibliography}{1}
 \bibliographystyle{IEEEtran}
-    \bibitem{ref1}
-    
 
+    \bibitem{UGVs are Useful}
+    N. Li, J. Cao and Y. Huang, "Fabrication and testing of the rescue quadruped robot for post-disaster search and rescue operations," 2023 IEEE 3rd International Conference on Electronic Technology, Communication and Information (ICETCI), Changchun, China, 2023, pp. 723-729, doi: 10.1109/ICETCI57876.2023.10176723.
+    
+    \bibitem{UAVs are Useful}
+    S. Waharte and N. Trigoni, "Supporting Search and Rescue Operations with UAVs," 2010 International Conference on Emerging Security Technologies, Canterbury, UK, 2010, pp. 142-147, doi: 10.1109/EST.2010.31.
+    
+    \bibitem{MRS approach to SAR}
+    L. Li, M. Bai, "Multi-Robot Cooperation for Search and Rescue: A Review of the State of the Art," in IEEE Access, vol. 8, pp, 181553- 181567,2020.
+
+    \bibitem{UAVs planning UGVs paths}
+    J. Delmerico, E. Mueggler, J. Nitsch and D. Scaramuzza, "Active Autonomous Aerial Exploration for Ground Robot Path Planning," in IEEE Robotics and Automation Letters, vol. 2, no. 2, pp. 664-671, April 2017, doi: 10.1109/LRA.2017.2651163.
+    
+    \bibitem{UAV-UGV Coordination}
+    T. Reimer, B. Olivieri, M. Cavalcanti and M. Endler, "From Air to Ground: Coordinating UAVs and UGVs in SAR Missions," 2025 28th International Conference on Information Fusion (FUSION), Rio de Janeiro, Brazil, 2025, pp. 1-6, doi: 10.23919/FUSION65864.2025.11124130.
+
+    \bibitem{Webots}
+    Webots. http://www.cyberbotics.com. Open-source Mobile Robot Simulation Software.
+    
+    \bibitem{}
+    Any papers publishing curical algorithms or similar
 
 \end{thebibliography}
 
