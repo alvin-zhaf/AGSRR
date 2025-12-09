@@ -38,6 +38,9 @@
 #define GREEN_DOMINANCE 15
 #define GREEN_RATIO_THRESHOLD 0.10
 
+// Testing constants
+#define GOAL 3
+
 // Predefined waypoints 
 #define NUM_WAYPOINTS 9
 static const double WAYPOINTS[NUM_WAYPOINTS][2] = {
@@ -680,8 +683,18 @@ int main(int argc, char **argv) {
   
   // Seed random for 50/50 detour choice
   srand(42);
+  
+  int search_start_time = 0;
+  bool search_started = false;
 
   while (wb_robot_step(timeStep) != -1) {
+  
+    if (!search_started && mode == MODE_AUTONOMOUS && ctx.state != STATE_INIT) {
+      search_started = true;
+      search_start_time = wb_robot_get_time() * 1000;  // Convert to milliseconds
+      printf("[TIMER] Search started!\n");
+    }
+    
     Pose pose = get_robot_pose(gps, compass);
 
     // SLAM updates - run every step
@@ -801,8 +814,21 @@ int main(int argc, char **argv) {
           store_victim(ctx.victim_x, ctx.victim_y);
           print_victims();
           
-          printf("[VICTIM] Resuming navigation...\n\n");
-          ctx.state = ctx.prev_state;
+          // Check if victim amount satisfy goal
+          if (victim_count >= GOAL) {
+            int elapsed = (wb_robot_get_time() * 1000) - search_start_time;
+            printf("\n========================================\n");
+            printf("[COMPLETE] %d victims found!\n", victim_count);
+            printf("[TIMER] Total search time: %d ms (%.2f seconds)\n", elapsed, elapsed / 1000.0);
+            printf("========================================\n");
+            print_victims();
+            print_map();
+            ctx.state = STATE_COMPLETE;
+          } else {
+            printf("[VICTIM] Resuming navigation... (%d/%d victims found)\n\n", 
+                   victim_count, GOAL);
+            ctx.state = ctx.prev_state;
+          }
           ctx.victim_stop_counter = 0;
         }
         break;

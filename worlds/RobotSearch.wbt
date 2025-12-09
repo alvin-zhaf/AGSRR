@@ -5,11 +5,11 @@ EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2025a/project
 EXTERNPROTO "../protos/SurveyorSrv1.proto"
 EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2025a/projects/robots/dji/mavic/protos/Mavic2Pro.proto"
 EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2025a/projects/objects/floors/protos/RectangleArena.proto"
-EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2025a/projects/appearances/protos/Asphalt.proto"
 EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2025a/projects/objects/rocks/protos/Rock.proto"
 EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2025a/projects/objects/solids/protos/SolidBox.proto"
 EXTERNPROTO "../protos/RescueVictimSitting.proto"
 EXTERNPROTO "../protos/RescueVictimFaceUp.proto"
+EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2025a/projects/appearances/protos/Asphalt.proto"
 
 WorldInfo {
   info [
@@ -23,8 +23,8 @@ WorldInfo {
   }
 }
 Viewpoint {
-  orientation 0.3226126545833255 0.7415603163534104 -0.5882256134448156 1.2736018401100835
-  position -0.5585100980365697 5.347805726807294 6.1466642577724215
+  orientation -0.5773502691896258 0.5773502691896258 0.5773502691896258 2.0944
+  position 2.035510607740661 1.9700140922762457 7.816513507154018
 }
 TexturedBackground {
 }
@@ -39,69 +39,83 @@ SurveyorSrv1 {
     }
   ]
 }
-Solid {
-  translation 0.05 -4.59 0
-  children [
-    Pose {
-      translation -0.02 -0.03 0
-      children [
-        Shape {
-          appearance Asphalt {
-          }
-          geometry ElevationGrid {
-            height [
-              0, 0.3, 0.5, 0.2, 0, 0.3, 0.4, 0.6, 0.4, 0.2
-              0.4, 0.1, 0, 0.2, 0.15, 0.3, 0.4, 0.25, 0.15, 0.4
-              0.12, 0.3, 0.2, 0, 0.15
-            ]
-            xDimension 5
-            yDimension 5
-          }
-        }
-      ]
-    }
-  ]
-  boundingObject Shape {
-    appearance Asphalt {
-    }
-    geometry ElevationGrid {
-      height [
-        0, 0.3, 0.5, 0.2, 0, 0.3, 0.4, 0.6, 0.4, 0.2
-        0.4, 0.1, 0, 0.2, 0.15, 0.3, 0.4, 0.25, 0.15, 0.4
-        0.12, 0.3, 0.2, 0, 0.15
-      ]
-      xDimension 5
-      yDimension 5
-    }
-  }
-}
 Rock {
-  translation 2.09 0.43 0.14
+  translation 2.09 0.24 0.14
   scale 3
 }
 Rock {
-  translation 2.18 3.42 0.05
+  translation 0.24 0.67 0.14
+  name "rock(7)"
+  scale 3
+}
+Rock {
+  translation 1.77 3.29 0.05
   name "rock(1)"
   scale 3
 }
 Rock {
-  translation 1.75 1.91 0.12
+  translation 1.75 2.32 0.12
   name "rock(4)"
   scale 3
 }
 Rock {
-  translation 0.99 1.06 0.12
+  translation 1.75 1.66 0.12
+  name "rock(12)"
+  scale 3
+}
+Rock {
+  translation 0.36 2.66 0.12
+  name "rock(13)"
+  scale 3
+}
+Rock {
+  translation 0.97 1.79 0.12
+  name "rock(15)"
+  scale 3
+}
+Rock {
+  translation 1.15 0.21 0.12
+  name "rock(14)"
+  scale 3
+}
+Rock {
+  translation 0.53 1.01 0.12
   name "rock(3)"
   scale 3
 }
 Rock {
-  translation 3.46 1.49 0.12
+  translation 1.08 2.51 0.12
+  name "rock(8)"
+  scale 3
+}
+Rock {
+  translation 1.08 2.51 0.12
+  name "rock(11)"
+  scale 2
+}
+Rock {
+  translation 2.4 0.98 0.12
+  name "rock(9)"
+  scale 3
+}
+Rock {
+  translation 3.29 0.36 0.12
+  name "rock(10)"
+  scale 3
+}
+Rock {
+  translation 3.58 1.62 0.12
   name "rock(5)"
   scale 3
 }
 Rock {
   translation 3.36 3.3 0.14
   name "rock(2)"
+  scale 3
+}
+Rock {
+  translation 2.1 2.54 0.08
+  name "rock(6)"
   scale 3
 }
 Mavic2Pro {
@@ -115,6 +129,8 @@ Mavic2Pro {
 RectangleArena {
   translation 2.03 1.97 0
   floorSize 4 4
+  floorAppearance Asphalt {
+  }
   wallHeight 0.6
 }
 DEF victim3 RescueVictimFaceUp {
@@ -125,13 +141,13 @@ DEF victim3 RescueVictimFaceUp {
   shirtColor 0 0.8 0
 }
 DEF victim2 RescueVictimFaceUp {
-  translation 1.90529 3.34363 0.01
-  rotation 0 0 1 4.692820414042842e-06
+  translation 1.90529 2.51363 0.01
+  rotation 0 0 1 1.5708
   scale 0.25 0.25 0.25
   shirtColor 0 0.8 0
 }
 DEF victim1 RescueVictimSitting {
-  translation 2.46015 0.409048 0.044437
+  translation 0.623579 0.734367 0.01253
   rotation 0.661306242390936 -0.6649042437097243 -0.3472411272755291 2.65147
   scale 0.25 0.25 0.25
   shirtColor 0 0.8 0

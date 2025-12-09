@@ -8,5 +8,5 @@ orthographicViewHeight: 1
 textFiles: 0 "controllers/surveyor/surveyor.c"
 consoles: Console:All:All
 renderingDevicePerspectives: Mavic 2 PRO:camera;1;0.670833;0;0
-renderingDevicePerspectives: SurveyorSrv1:camera;0;0.166667;0;0
+renderingDevicePerspectives: SurveyorSrv1:camera;1;0.166667;0;0
 renderingDevicePerspectives: SurveyorSrv1:ground_cam;1;0.28125;0;0.113675
