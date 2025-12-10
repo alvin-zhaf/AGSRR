@@ -23,8 +23,8 @@ WorldInfo {
   }
 }
 Viewpoint {
-  orientation -0.5773502691896258 0.5773502691896258 0.5773502691896258 2.0944
-  position 2.035510607740661 1.9700140922762457 7.816513507154018
+  orientation -0.5350861113630463 0.5724809515032984 0.6212474656626388 1.9683685672607472
+  position 1.6915805197323068 -0.3023136888912843 7.904649339868438
 }
 TexturedBackground {
 }
@@ -40,7 +40,12 @@ SurveyorSrv1 {
   ]
 }
 Rock {
-  translation 2.09 0.24 0.14
+  translation 1.44 1.09 0.14
+  scale 3
+}
+Rock {
+  translation 0.85 0.99 0.14
+  name "rock(14)"
   scale 3
 }
 Rock {
@@ -49,73 +54,103 @@ Rock {
   scale 3
 }
 Rock {
-  translation 1.77 3.29 0.05
+  translation 0.81 1.69 0.14
+  name "rock(17)"
+  scale 3
+}
+Rock {
+  translation 1.62 3.4 0.05
   name "rock(1)"
   scale 3
 }
 Rock {
-  translation 1.75 2.32 0.12
+  translation 1.73 2.48 0.12
   name "rock(4)"
   scale 3
 }
 Rock {
-  translation 1.75 1.66 0.12
+  translation 1.43 2.32 0.12
+  name "rock(10)"
+  scale 2
+}
+Rock {
+  translation 1.12 2.33 0.12
   name "rock(12)"
   scale 3
 }
 Rock {
-  translation 0.36 2.66 0.12
+  translation 0.81 2.66 0.12
   name "rock(13)"
   scale 3
 }
 Rock {
-  translation 0.97 1.79 0.12
-  name "rock(15)"
+  translation 1.95 3.28 0.12
+  name "rock(11)"
   scale 3
 }
 Rock {
-  translation 1.15 0.21 0.12
-  name "rock(14)"
-  scale 3
-}
-Rock {
-  translation 0.53 1.01 0.12
+  translation 0.4 1.01 0.12
   name "rock(3)"
   scale 3
 }
 Rock {
-  translation 1.08 2.51 0.12
+  translation 0.6 2.3 0.12
+  name "rock(18)"
+  scale 3
+}
+Rock {
+  translation 1.04 3 0.12
   name "rock(8)"
   scale 3
 }
 Rock {
-  translation 1.08 2.51 0.12
-  name "rock(11)"
-  scale 2
-}
-Rock {
-  translation 2.4 0.98 0.12
+  translation 1.81 1.59 0.12
   name "rock(9)"
   scale 3
 }
 Rock {
-  translation 3.29 0.36 0.12
-  name "rock(10)"
+  translation 1.81 1.72 0.12
+  name "rock(15)"
   scale 3
 }
 Rock {
-  translation 3.58 1.62 0.12
+  translation 3.02 0.83 0.12
+  name "rock(21)"
+  scale 3
+}
+Rock {
+  translation 2.69 0.28 0.12
+  name "rock(22)"
+  scale 3
+}
+Rock {
+  translation 2.72 3.27 0.12
+  name "rock(16)"
+  scale 3
+}
+Rock {
+  translation 3.46 1.62 0.12
   name "rock(5)"
   scale 3
 }
 Rock {
-  translation 3.36 3.3 0.14
+  translation 3.77 2.84 0.14
   name "rock(2)"
   scale 3
 }
 Rock {
-  translation 2.1 2.54 0.08
+  translation 3.5 2.28 0.14
+  name "rock(20)"
+  scale 3
+}
+Rock {
+  translation 3.13 3.21 0.08
   name "rock(6)"
+  scale 3
+}
+Rock {
+  translation 3.61 3.13 0.08
+  name "rock(19)"
   scale 3
 }
 Mavic2Pro {
@@ -134,15 +169,15 @@ RectangleArena {
   wallHeight 0.6
 }
 DEF victim3 RescueVictimFaceUp {
-  translation 3.23921 1.67354 0.03
-  rotation 0 0 1 -2.094395307179586
+  translation 1.52804 2.44932 0.03
+  rotation 0 0 1 1.57079
   scale 0.25 0.25 0.25
   name "victim_faceup(1)"
   shirtColor 0 0.8 0
 }
 DEF victim2 RescueVictimFaceUp {
-  translation 1.90529 2.51363 0.01
-  rotation 0 0 1 1.5708
+  translation 3.55046 1.96751 0.07
+  rotation 0 0 -1 0.523588
   scale 0.25 0.25 0.25
   shirtColor 0 0.8 0
 }
