@@ -263,7 +263,7 @@ int main(int argc, char **argv) {
     else
     {
       /* Check for new waypoint from drone */
-      while (receiver && wb_receiver_get_queue_length(receiver) > 0) {
+      if (receiver && wb_receiver_get_queue_length(receiver) > 0 && !ctx.has_target) {
         const char *msg = (const char *)wb_receiver_get_data(receiver);
         sscanf(msg, "%lf,%lf", &ctx.target_x, &ctx.target_y);
         printf("New target from drone: (%.2f, %.2f)\n", ctx.target_x, ctx.target_y);
