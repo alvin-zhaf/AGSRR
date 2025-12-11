@@ -23,8 +23,8 @@ WorldInfo {
   }
 }
 Viewpoint {
-  orientation -0.5651788749231802 0.5595552727211291 0.6061936457193783 2.0605205241797067
-  position 2.237052771275148 1.6411329658951068 7.171804209944858
+  orientation -0.5410960133443978 0.5527184948550107 0.6338117778867878 1.9924710296837747
+  position 1.9223854363451194 0.37899239160455034 7.410566709047215
 }
 TexturedBackground {
 }
@@ -40,22 +40,23 @@ SurveyorSrv1 {
   ]
 }
 Rock {
-  translation 2.09 0.24 0.14
-  scale 3
-}
-Rock {
-  translation 0.24 0.67 0.14
-  name "rock(7)"
-  scale 3
-}
-Rock {
   translation 1.77 3.29 0.05
   name "rock(1)"
   scale 3
 }
 Rock {
-  translation 1.75 1.66 0.12
-  name "rock(12)"
+  translation 2.56 3.29 0.05
+  name "rock(3)"
+  scale 3
+}
+Rock {
+  translation 3.85 2.48 0.05
+  name "rock(6)"
+  scale 3
+}
+Rock {
+  translation 3.19 0.14 0.05
+  name "rock(7)"
   scale 3
 }
 Rock {
@@ -74,23 +75,8 @@ Rock {
   scale 3
 }
 Rock {
-  translation 1.08 2.51 0.12
-  name "rock(8)"
-  scale 3
-}
-Rock {
-  translation 1.08 2.51 0.12
-  name "rock(11)"
-  scale 2
-}
-Rock {
-  translation 2.4 0.98 0.12
-  name "rock(9)"
-  scale 3
-}
-Rock {
-  translation 3.29 0.36 0.12
-  name "rock(10)"
+  translation 1.62 1.02 0.12
+  name "rock(4)"
   scale 3
 }
 Rock {
@@ -104,13 +90,13 @@ Rock {
   scale 3
 }
 Rock {
-  translation 2.1 2.79 0.08
-  name "rock(6)"
+  translation 2.47 1.56 0.08
+  name "rock(8)"
   scale 3
 }
 Rock {
-  translation 2.93 2.39 0.08
-  name "rock(3)"
+  translation 0.84 2.63 0.08
+  name "rock(10)"
   scale 3
 }
 Mavic2Pro {
@@ -137,13 +123,13 @@ DEF victim3 RescueVictimFaceUp {
   name "victim_faceup(1)"
 }
 DEF victim2 RescueVictimFaceUp {
-  translation 1.90529 2.51363 0.01
-  rotation 0 0 1 1.5708
+  translation 1.95478 2.56312 0.01
+  rotation 0 0 1 2.3562
   scale 0.25 0.25 0.25
 }
 DEF victim1 RescueVictimSitting {
-  translation 0.623579 0.734367 0.01253
-  rotation 0.661306242390936 -0.6649042437097243 -0.3472411272755291 2.65147
+  translation 1.06324 1.10109 -0.0673921
+  rotation -0.2247330570648993 0.6547321662515769 0.7216791832509665 2.56451
   scale 0.25 0.25 0.25
 }
 SolidBox {
