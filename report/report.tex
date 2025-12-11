@@ -11,8 +11,8 @@
 \usepackage{graphicx}
 \usepackage{cite}
 \usepackage{lipsum}
+\usepackage{bm}
 \hyphenation{op-tical net-works semi-conduc-tor IEEE-Xplore}
-% updated with editorial comments 8/9/2021
 
 \begin{document}
 
@@ -22,7 +22,7 @@
 
 % The paper headers
 \markboth{University of Birmingham Intelligent Robotics}
-{Edward J. Silvey, Alfian Fadhlurrahman, Shailee D. Kampani, Alvin Zhafif Afilla,\MakeLowercase{\textit{(et al.)}:Aerial-supported Ground Search and Rescue Robot}}
+{Edward J. Silvey, Alfian Fadhlurrahman, Shailee D. Kampani, Alvin Zhafif Afilla,\MakeLowercase{\textit{(et al.)}:Improving Search and Rescue Response Times by Using Aerial-Supported Ground Search and Rescue Robots}}
 
 \maketitle
 
@@ -31,37 +31,70 @@ Write this at the end when we know what we have written.
 \end{abstract}
 
 \begin{IEEEkeywords}
-Aerial Systems: Applications; Multi-Robot Systems; Search and Rescue Robots
+Aerial Systems: Applications; Autonomous Vehicle Navigation; Multi-Robot Systems; Search and Rescue Robots; SLAM
 \end{IEEEkeywords}
 
 \section{Introduction}
-\IEEEPARstart{S}{earch} and rescue requires finding as many victims of disasters as fast as possible.  Both ground and aerial search and rescue robots have become commonly used strategies individually in order to improve search and rescue \cite{UGVs are Useful, UAVs are Useful}. Both of these methods though, have their downsides along with their upsides.  Unmanned Aerial Vehicles (UAVs) are able to provide a coverage of a wide area quickly whilst avoiding any obstacles on the ground, but are largely unable to provide help to victims once found.  Unmanned Ground Vehicles (UGVs) however, are able to provide the assistance once they find the victim, but have to avoid obstacles on the ground.
+\IEEEPARstart{S}{earch} and rescue (SAR) requires finding as many victims of disasters as fast as possible.  Both ground and aerial search and rescue robots have become commonly used strategies individually in order to improve search and rescue \cite{UGVs are Useful, UAVs are Useful}. Both of these methods though, have their downsides along with their upsides.  Unmanned Aerial Vehicles (UAVs) or drones are able to provide a coverage of a wide area quickly whilst avoiding any obstacles on the ground, but are largely unable to provide help to victims once found.  Unmanned Ground Vehicles (UGVs) or rovers, are able to provide the assistance once they find the victim, but have to avoid obstacles on the ground.
 \par There has been extensive research on multi-robot systems for search and rescue purposes \cite{MRS approach to SAR, UAVs planning UGVs paths} and how best they can be coordinated \cite{UAV-UGV Coordination}.
 \par Combining the two methods could lead to a quicker response times and more victims being found successfully, thus improving search and rescue overall.
 
 \section{Methods}
-A brief intro to the methods summary outlining the different sections and that they are outlined below.
+In order to test if a UAV-UGV search party was able to perform more efficiently, we decided to simulate both a UAV-UGV search party and a lone UAV-UGV search party in Webots \cite{Webots}.  From here we able to time how long it took for both methods to complete different search and rescue missions.
 
 \subsection{Drone Movement and Flight Control}
-\begin{itemize}
-    \item{Take off and landing}
-    \item{How flight path was assigned - hard-coded points}
-    \item{How points are reached}
-\end{itemize}
+The purpose of the drone is to fly over the designated area, locating victims in need of rescue and sending their location to the ground rovers so that they can provide the needed help.
+\par The UAV is controlled by an adapted version of the \textit{mavic2pro.c} sample controller\cite{Drone Original Code} that has been changed in order to navigate to predetermined GPS waypoints, as opposed to being remotely controlled by a pilot.  For this use case these waypoints follow a Boustrophedon path \cite{Boustrophedon} over the target area, moving forwards only once it has reached the other end of a row.  This allows all areas of the target area to be covered by the drone.
+\par The movement of the drone is determined by the error between it's own GPS location and the GPS location of the target waypoint. This is calculated as:
+\begin{equation} \boldsymbol{E}=\boldsymbol{p}-\boldsymbol{t} \end{equation}
+where $\boldsymbol{E}$ is the position error and $\boldsymbol{p}$ and $\boldsymbol{t}$ are the position vectors of the drone location and target location respectively.  This error in position is then converted into disturbance, calculated as:
+\begin{equation} \boldsymbol{D} = \begin{bmatrix} \min(\max(-2\boldsymbol{E}_0, -2), 2) \\ \min(\max(2\boldsymbol{E}_1, -2), 2) \\ 0 \\ \min(\max(\boldsymbol{E}_2 + 0.6, -1), 1) \end{bmatrix} \end{equation}
+where $\boldsymbol{D}$ is the disturbance vector for pitch, roll, yaw and altitude respectively.  These values are clamped as such to prevent exaggerated movements causing the drone to loose control.  As when moving along it's path the drone does not need rotate yaw will always be 0.
+\par A waypoint is considered to be visited when both the euclidean distance in horizontal plane is less than 0.2 and the altitude difference in altitude is less than 0.1.  These constraints can be expressed in the forms $\sqrt{(E_0^2)+(E_1^2)} < 0.2$ \text{ and } $\mid E_3 \mid < 0.1$ respectively.
 
-\subsection{Target Location Detection and Tagging}
-Think about the key points you need to cover to describe the methods you used.
-Section about how victims are located and that location is sent to the ground section.
+\subsection{Victim Detection and Communication}
+This section operates on two primary tasks: (1) colour-based victim recognition using the drone’s onboard camera and (2) communication of the detected victim coordinates to the Surveyor ground robot.
+
+\subsubsection{Simulation Environment Configuration}
+To facilitate controlled testing of the detection algorithm, custom victim prototypes were designed to represent casualties in various positions (sitting, lying down). For the purposes of this experiment, all victim instances were initialized with green coloured shirts (RGB: 0, 0.8, 0) to have a consistent and distinctive visual signature for detection purposes. Three victim instances ("victim1", "victim2", "victim3") were positioned at strategic locations in the operational area to test coverage across the entire search pattern.
+\par The wireless communication architecture utilises the Webots emitter-receiver device pair. The drone's emitter was configured to broadcast on Channel 1, providing a dedicated communication link isolated from other devices. Correspondingly, the Surveyor's receiver was configured to monitor Channel 1, enabling asynchronous message reception.
+
+\subsubsection{Colour Based Detection}
+The detection method relies on RGB colour segmentation rather than more advanced computer vision approaches. Although deep learning methods (e.g., CNN-based classifiers) could theoretically offer increased robustness.  Webots does not natively integrate frameworks such as TensorFlow or PyTorch, and implementing such systems would exceed the real-time processing constraints of the simulation time step.
+\par At every image update, the controller samples the pixel values at the centre of the camera frame $(\frac{width}{2}, \frac{height}{2})$. This significantly reduces the computational load while maintaining detection reliability during systematic area coverage.
+\par A victim is flagged when the following condition is satisfied:
+\begin{equation}(G > R + 30) \land (G > B + 30) \land (G > 100) \end{equation}
+where $R$, $G$, and $B$ represent the green, red, and blue channel intensity values respectively, ranging from 0 to 255.
+\par This threshold ensures that the green channel exhibits significant dominance over both red and blue channels, while requiring absolute green intensity above 100 to eliminate false positives from dark regions or low-saturation terrain features.
+\par Once a green region is detected, the controller verifies that the object corresponds to an untagged victim by checking an internal registry maintaining detection status flags for each victim.
+
+\subsubsection{Coordinate Extraction and Communication}
+Once a victim is verified, the system extracts spatial coordinates and transmits them immediately via Channel 1. Coordinates are formatted as ASCII strings:
+\begin{center}\texttt{"X,Y\textbackslash0"}\end{center}
+Coordinates are sent with two decimal places of precision (e.g., \texttt{2.45,1.83}), which is sufficient for centimetre-level localisation required by the ground robot. Each coordinate pair is transmitted exactly once to prevent redundant transmissions. The null-terminated string format ensures reliable message framing at the receiver.
+\par This communication protocol is deliberately lightweight: the message contains only numerical coordinates and a null-terminator, minimising bandwidth and preventing desynchronisation between the robots. The Surveyor robot, upon receiving the coordinates, shifts into targeted navigation mode and uses its internal motion-planning logic to travel to the exact location.
+
+\subsubsection{Final Tagging and Output Summary}
+After detection, the drone tags the victim by updating their shirt colour to red, ensuring the system does not re-process previously identified victims. When all waypoints are traversed, the detection subsystem outputs a complete summary of found victims and their coordinates for quantitative assessment.
 
 \subsection{Ground Robot Navigation, and Obstacle Avoidance}
 Think about the key points you need to cover to describe the methods you used.
-Section about how ground robot is moved and how it avoids obstacles.
+Section about how the ground robot is moved and how it avoids obstacles.
 
-\subsection{Ground Robot Markov Localisation}
-Think about the key points you need to cover to describe the methods you used.
-Section about how ground robot is moved and how it avoids obstacles.
+\subsection{Ground Robot SLAM Assisted Navigation}
+For our benchmark baseline, we developed a ground robot that uses a state-machine-based controller for autonomously moving to predefined coordinates. The robot is also assisted with SLAM and an Obstacle Avoidance algorithm to ensure it reaches the victims by any means efficiently.
+\par
+\begin{itemize}
+    \item{The robot will be able to traverse throught those coordinates through a waypoint-following function with pose feedback using GPS or Compass and differential wheel speed control for slowing down near objectives }
+    \item{The robot is also equipped with an obstacle avoidance algorithm that allows the robot to detour sideways before it continue to drive towards the objective}
+    \item{SLAM is implemented for visualizing an occupancy grid for the robot using its 4 IR sensors, the occupancy grid will map free spaces, obstacles, and also the victims. It is also used for pre-checking an obstacle near the waypoint periodically, such that if an obstacle persist it will detour first before continue to head to the objective}
+    \item{The robot will also be    equipped with a camera for detecting the victims along the way, this is done because we will make this version of the robot to detect victims on its own without the help of a drone   }
+\end{itemize}
 
 \subsection{Comparing Approaches}
+To compare the UAV-UGV search team to the UGV only approach we simulated different SAR scenarios.  In order to ensure controlled results we varied both the location of the victims, as well as the quantity and location of obstacles.
+
+
 \begin{itemize}
     \item{Set a test map with target locations}
     \item{Time the processes to find all victims using single rover approach}
@@ -103,9 +136,18 @@ Any Limitations
 
     \bibitem{Webots}
     Webots. http://www.cyberbotics.com. Open-source Mobile Robot Simulation Software.
+
+    \bibitem{Drone Original Code}
+    Cyberbotics Ltd., mavic2pro.c, Webots Sample Controllers. Available: https://cyberbotics.com
+
+    \bibitem{Boustrophedon}
+    H. Choset, “Coverage of Known Spaces: The Boustrophedon Cellular Decomposition,” Autonomous Robots, vol. 9, no. 3, pp. 247–253, Dec. 2000, doi: https://doi.org/10.1023/a:1008958800904.
     
     \bibitem{}
     Any papers publishing curical algorithms or similar
+
+    \bibitem{repo}
+    link to the repository on GitHub.
 
 \end{thebibliography}
 
