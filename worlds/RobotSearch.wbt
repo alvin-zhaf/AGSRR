@@ -5,11 +5,11 @@ EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2025a/project
 EXTERNPROTO "../protos/SurveyorSrv1.proto"
 EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2025a/projects/robots/dji/mavic/protos/Mavic2Pro.proto"
 EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2025a/projects/objects/floors/protos/RectangleArena.proto"
-EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2025a/projects/appearances/protos/Asphalt.proto"
 EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2025a/projects/objects/rocks/protos/Rock.proto"
 EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2025a/projects/objects/solids/protos/SolidBox.proto"
 EXTERNPROTO "../protos/RescueVictimSitting.proto"
 EXTERNPROTO "../protos/RescueVictimFaceUp.proto"
+EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2025a/projects/appearances/protos/Asphalt.proto"
 
 WorldInfo {
   info [
@@ -23,15 +23,15 @@ WorldInfo {
   }
 }
 Viewpoint {
-  orientation -0.5773502691896258 0.5773502691896258 0.5773502691896258 2.0944
-  position 2.035510607740661 1.9700140922762457 8.08121505126658
+  orientation -0.5651788749231802 0.5595552727211291 0.6061936457193783 2.0605205241797067
+  position 2.237052771275148 1.6411329658951068 7.171804209944858
 }
 TexturedBackground {
 }
 TexturedBackgroundLight {
 }
 SurveyorSrv1 {
-  translation 0.51 2.8 0.03
+  translation 1.11 3.32 -0.01
   controller "surveyor"
   extensionSlot [
     DEF receiver Receiver {
@@ -39,59 +39,78 @@ SurveyorSrv1 {
     }
   ]
 }
-Solid {
-  translation 0.05 4.31 0
-  children [
-    Pose {
-      translation -0.02 -0.03 0
-      children [
-        Shape {
-          appearance Asphalt {
-          }
-          geometry ElevationGrid {
-            height [
-              0, 0.3, 0.5, 0.2, 0, 0.3, 0.4, 0.6, 0.4, 0.2
-              0.4, 0.1, 0, 0.2, 0.15, 0.3, 0.4, 0.25, 0.15, 0.4
-              0.12, 0.3, 0.2, 0, 0.15
-            ]
-            xDimension 5
-            yDimension 5
-          }
-        }
-      ]
-    }
-  ]
-  boundingObject Shape {
-    appearance Asphalt {
-    }
-    geometry ElevationGrid {
-      height [
-        0, 0.3, 0.5, 0.2, 0, 0.3, 0.4, 0.6, 0.4, 0.2
-        0.4, 0.1, 0, 0.2, 0.15, 0.3, 0.4, 0.25, 0.15, 0.4
-        0.12, 0.3, 0.2, 0, 0.15
-      ]
-      xDimension 5
-      yDimension 5
-    }
-  }
-}
 Rock {
-  translation 2.09 0.8 -0.05
+  translation 2.09 0.24 0.14
   scale 3
 }
 Rock {
-  translation 1.86574 2.59199 -0.02
+  translation 0.24 0.67 0.14
+  name "rock(7)"
+  scale 3
+}
+Rock {
+  translation 1.77 3.29 0.05
   name "rock(1)"
   scale 3
 }
 Rock {
-  translation 3.32 2.08 0.02
-  name "rock(3)"
+  translation 1.75 1.66 0.12
+  name "rock(12)"
   scale 3
 }
 Rock {
-  translation 3.36 2.86 0.03
+  translation 0.36 2.66 0.12
+  name "rock(13)"
+  scale 3
+}
+Rock {
+  translation 0.97 1.79 0.12
+  name "rock(15)"
+  scale 3
+}
+Rock {
+  translation 1.15 0.21 0.12
+  name "rock(14)"
+  scale 3
+}
+Rock {
+  translation 1.08 2.51 0.12
+  name "rock(8)"
+  scale 3
+}
+Rock {
+  translation 1.08 2.51 0.12
+  name "rock(11)"
+  scale 2
+}
+Rock {
+  translation 2.4 0.98 0.12
+  name "rock(9)"
+  scale 3
+}
+Rock {
+  translation 3.29 0.36 0.12
+  name "rock(10)"
+  scale 3
+}
+Rock {
+  translation 3.58 1.62 0.12
+  name "rock(5)"
+  scale 3
+}
+Rock {
+  translation 3.36 3.3 0.14
   name "rock(2)"
+  scale 3
+}
+Rock {
+  translation 2.1 2.79 0.08
+  name "rock(6)"
+  scale 3
+}
+Rock {
+  translation 2.93 2.39 0.08
+  name "rock(3)"
   scale 3
 }
 Mavic2Pro {
@@ -107,20 +126,23 @@ Mavic2Pro {
 RectangleArena {
   translation 2.03 1.97 0
   floorSize 4 4
+  floorAppearance Asphalt {
+  }
   wallHeight 0.6
 }
 DEF victim3 RescueVictimFaceUp {
-  translation 3.23921 1.67354 -1.73472e-18
+  translation 3.23921 1.67354 0.03
   rotation 0 0 1 -2.094395307179586
   scale 0.25 0.25 0.25
+  name "victim_faceup(1)"
 }
-DEF victim1 RescueVictimFaceUp {
-  translation 2.33051 3.20051 0.01
-  rotation 0 0 1 0.785398
+DEF victim2 RescueVictimFaceUp {
+  translation 1.90529 2.51363 0.01
+  rotation 0 0 1 1.5708
   scale 0.25 0.25 0.25
 }
-DEF victim2 RescueVictimSitting {
-  translation 2.87477 0.803575 -0.00210426
+DEF victim1 RescueVictimSitting {
+  translation 0.623579 0.734367 0.01253
   rotation 0.661306242390936 -0.6649042437097243 -0.3472411272755291 2.65147
   scale 0.25 0.25 0.25
 }
