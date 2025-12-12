@@ -18,16 +18,18 @@
 
 \title{Improving Search and Rescue Response Times by Using Aerial-Supported Ground Search and Rescue Robots}
 
-\author{Edward J. Silvey, Alfian Fadhlurrahman, Shailee D. Kampani, Alvin Zhafif Afilla}
+\author{Edward Silvey, Alfian Fadhlurrahman, Shailee Kampani, Alvin Afilla}
 
 % The paper headers
 \markboth{University of Birmingham Intelligent Robotics}
-{Edward J. Silvey, Alfian Fadhlurrahman, Shailee D. Kampani, Alvin Zhafif Afilla,\MakeLowercase{\textit{(et al.)}:Improving Search and Rescue Response Times by Using Aerial-Supported Ground Search and Rescue Robots}}
+{Edward Silvey, Alfian Fadhlurrahman, Shailee Kampani, Alvin Afilla,\MakeLowercase{\textit{(et al.)}:Improving Search and Rescue Response Times by Using Aerial-Supported Ground Search and Rescue Robots}}
 
 \maketitle
 
 \begin{abstract}
-Write this at the end when we know what we have written.
+Search and rescue (SAR) missions demand rapid victim location. Both UAVs and UGVs have been successfully used independently for SAR, but each has clear limitations. UAVs provide fast, wide-area coverage but cannot directly assist victims, while UGVs can deliver on-site support yet take longer to locate them. This work evaluates whether combining both platforms can improve overall rescue efficiency.
+\par To test this, we simulate an autonomous UAV–UGV team in Webots and compare it against a SLAM enabled ground robot as a baseline.  The UAV performs a boustrophedon coverage pattern, detects victims using colour-based vision, and transmits their coordinates to the UGV. The ground robot then navigates directly to each victim using waypoint control and obstacle avoidance.
+\par Across varied SAR scenarios, the UAV-supported system completes missions significantly faster, taking an average 56\% of the time the UGV-only takes. These results show that aerial guidance can substantially reduce search times and improve the effectiveness of ground-based rescue robots.
 \end{abstract}
 
 \begin{IEEEkeywords}
@@ -35,86 +37,214 @@ Aerial Systems: Applications; Autonomous Vehicle Navigation; Multi-Robot Systems
 \end{IEEEkeywords}
 
 \section{Introduction}
-\IEEEPARstart{S}{earch} and rescue (SAR) requires finding as many victims of disasters as fast as possible.  Both ground and aerial search and rescue robots have become commonly used strategies individually in order to improve search and rescue \cite{UGVs are Useful, UAVs are Useful}. Both of these methods though, have their downsides along with their upsides.  Unmanned Aerial Vehicles (UAVs) or drones are able to provide a coverage of a wide area quickly whilst avoiding any obstacles on the ground, but are largely unable to provide help to victims once found.  Unmanned Ground Vehicles (UGVs) or rovers, are able to provide the assistance once they find the victim, but have to avoid obstacles on the ground.
+\IEEEPARstart{S}{earch} and rescue (SAR) requires finding as many victims of disasters as fast as possible.  Both ground and aerial search and rescue robots have become commonly used strategies in order to improve search and rescue \cite{UGVs are Useful, UAVs are Useful}. Both of these methods though, have their downsides along with their upsides.  Unmanned Aerial Vehicles (UAVs) or drones are able to provide coverage of a wide area quickly whilst avoiding any obstacles on the ground, but are largely unable to provide help to victims once found.  Unmanned Ground Vehicles (UGVs) or rovers, are able to provide the assistance once they find the victim, but have to avoid obstacles on the ground.
 \par There has been extensive research on multi-robot systems for search and rescue purposes \cite{MRS approach to SAR, UAVs planning UGVs paths} and how best they can be coordinated \cite{UAV-UGV Coordination}.
 \par Combining the two methods could lead to a quicker response times and more victims being found successfully, thus improving search and rescue overall.
 
 \section{Methods}
-In order to test if a UAV-UGV search party was able to perform more efficiently, we decided to simulate both a UAV-UGV search party and a lone UAV-UGV search party in Webots \cite{Webots}.  From here we able to time how long it took for both methods to complete different search and rescue missions.
+In order to test if a UAV-UGV search party was able to perform more efficiently, we decided to simulate both a combined UAV-UGV search party and a lone UGV search party in Webots \cite{Webots}.  Using this approach we were able to time how long it took for both methods to complete different search and rescue missions.  The code repository for this project can be found on GitHub \cite{Repo}.
 
 \subsection{Drone Movement and Flight Control}
 The purpose of the drone is to fly over the designated area, locating victims in need of rescue and sending their location to the ground rovers so that they can provide the needed help.
-\par The UAV is controlled by an adapted version of the \textit{mavic2pro.c} sample controller\cite{Drone Original Code} that has been changed in order to navigate to predetermined GPS waypoints, as opposed to being remotely controlled by a pilot.  For this use case these waypoints follow a Boustrophedon path \cite{Boustrophedon} over the target area, moving forwards only once it has reached the other end of a row.  This allows all areas of the target area to be covered by the drone.
+\par The UAV is controlled by an adapted version of the \textit{mavic2pro.c} sample controller\cite{Drone Original Code} that has been changed in order to navigate to predetermined GPS waypoints, as opposed to being remotely controlled by a pilot.  For this use case these waypoints follow a Boustrophedon path \cite{Boustrophedon} over the target area, moving forwards only once it has reached the other end of a row.  This allowed all areas of the target area to be covered by the drone.
 \par The movement of the drone is determined by the error between it's own GPS location and the GPS location of the target waypoint. This is calculated as:
-\begin{equation} \boldsymbol{E}=\boldsymbol{p}-\boldsymbol{t} \end{equation}
-where $\boldsymbol{E}$ is the position error and $\boldsymbol{p}$ and $\boldsymbol{t}$ are the position vectors of the drone location and target location respectively.  This error in position is then converted into disturbance, calculated as:
+\begin{equation} \boldsymbol{E}=\boldsymbol{t}-\boldsymbol{p} \end{equation}
+where $\boldsymbol{E}$ is the position error vector and $\boldsymbol{t}$ and $\boldsymbol{p}$ are the position vectors of the target location and drone location respectively.  This error in position is then converted into disturbance, calculated as:
 \begin{equation} \boldsymbol{D} = \begin{bmatrix} \min(\max(-2\boldsymbol{E}_0, -2), 2) \\ \min(\max(2\boldsymbol{E}_1, -2), 2) \\ 0 \\ \min(\max(\boldsymbol{E}_2 + 0.6, -1), 1) \end{bmatrix} \end{equation}
-where $\boldsymbol{D}$ is the disturbance vector for pitch, roll, yaw and altitude respectively.  These values are clamped as such to prevent exaggerated movements causing the drone to loose control.  As when moving along it's path the drone does not need rotate yaw will always be 0.
-\par A waypoint is considered to be visited when both the euclidean distance in horizontal plane is less than 0.2 and the altitude difference in altitude is less than 0.1.  These constraints can be expressed in the forms $\sqrt{(E_0^2)+(E_1^2)} < 0.2$ \text{ and } $\mid E_3 \mid < 0.1$ respectively.
+where $\boldsymbol{D}$ is the disturbance vector for pitch, roll, yaw and altitude respectively.  These values are clamped in order to prevent exaggerated movements which could cause the drone to loose control.  Since the drone does not need to rotate when moving along its path the yaw will always be set to 0.
+\par A waypoint is considered to be visited when both the euclidean distance in horizontal plane is less than 0.2m and the altitude difference is less than 0.1m.  These constraints can be expressed in the forms $\sqrt{(E_0^2)+(E_1^2)} < 0.2$ \text{ and } $\mid E_3 \mid < 0.1$ respectively.  Once a waypoint is reached the next waypoint is considered as the target location.  Once the final waypoint is reached the drone will hover in place.
 
 \subsection{Victim Detection and Communication}
 This section operates on two primary tasks: (1) colour-based victim recognition using the drone’s onboard camera and (2) communication of the detected victim coordinates to the Surveyor ground robot.
 
-\subsubsection{Simulation Environment Configuration}
-To facilitate controlled testing of the detection algorithm, custom victim prototypes were designed to represent casualties in various positions (sitting, lying down). For the purposes of this experiment, all victim instances were initialized with green coloured shirts (RGB: 0, 0.8, 0) to have a consistent and distinctive visual signature for detection purposes. Three victim instances ("victim1", "victim2", "victim3") were positioned at strategic locations in the operational area to test coverage across the entire search pattern.
-\par The wireless communication architecture utilises the Webots emitter-receiver device pair. The drone's emitter was configured to broadcast on Channel 1, providing a dedicated communication link isolated from other devices. Correspondingly, the Surveyor's receiver was configured to monitor Channel 1, enabling asynchronous message reception.
-
 \subsubsection{Colour Based Detection}
-The detection method relies on RGB colour segmentation rather than more advanced computer vision approaches. Although deep learning methods (e.g., CNN-based classifiers) could theoretically offer increased robustness.  Webots does not natively integrate frameworks such as TensorFlow or PyTorch, and implementing such systems would exceed the real-time processing constraints of the simulation time step.
+Webots does not natively integrate frameworks such as TensorFlow \cite{TensorFlow} or PyTorch \cite{PyTorch}, and implementing such systems would exceed the real-time processing constraints of the simulation time step.  As a result all victims in this scenario wear green (RGB: 0, 0.8, 0) to ensure a consistent and distinctive visual signature, as a result the detection method relies on RGB colour segmentation rather than more advanced computer vision approaches.
 \par At every image update, the controller samples the pixel values at the centre of the camera frame $(\frac{width}{2}, \frac{height}{2})$. This significantly reduces the computational load while maintaining detection reliability during systematic area coverage.
 \par A victim is flagged when the following condition is satisfied:
 \begin{equation}(G > R + 30) \land (G > B + 30) \land (G > 100) \end{equation}
 where $R$, $G$, and $B$ represent the green, red, and blue channel intensity values respectively, ranging from 0 to 255.
-\par This threshold ensures that the green channel exhibits significant dominance over both red and blue channels, while requiring absolute green intensity above 100 to eliminate false positives from dark regions or low-saturation terrain features.
-\par Once a green region is detected, the controller verifies that the object corresponds to an untagged victim by checking an internal registry maintaining detection status flags for each victim.
+\par This threshold ensures that the green channel is more dominant than both the red and blue channels, while also requiring the green intensity to be above 100. This helps avoid false positives from dark areas or low-saturation terrain features. 
+\par Once a green region is detected, the controller checks that the object corresponds to an untagged victim by looking at an internal registry that tracks the detection status of each victim. 
 
 \subsubsection{Coordinate Extraction and Communication}
-Once a victim is verified, the system extracts spatial coordinates and transmits them immediately via Channel 1. Coordinates are formatted as ASCII strings:
+The wireless communication architecture utilises the Webots emitter-receiver device pair. In order to provide a dedicated communication link separate from other devices, the drone's emitter was set up to broadcast on Channel 1. Correspondingly, the Surveyor's receiver was configured to monitor Channel 1, allowing for asynchronous message reception.
+\par Once a victim is verified, the system extracts its spatial coordinates and transmits them immediately via Channel 1. Coordinates are formatted as ASCII strings:
 \begin{center}\texttt{"X,Y\textbackslash0"}\end{center}
 Coordinates are sent with two decimal places of precision (e.g., \texttt{2.45,1.83}), which is sufficient for centimetre-level localisation required by the ground robot. Each coordinate pair is transmitted exactly once to prevent redundant transmissions. The null-terminated string format ensures reliable message framing at the receiver.
-\par This communication protocol is deliberately lightweight: the message contains only numerical coordinates and a null-terminator, minimising bandwidth and preventing desynchronisation between the robots. The Surveyor robot, upon receiving the coordinates, shifts into targeted navigation mode and uses its internal motion-planning logic to travel to the exact location.
+\par This communication protocol is deliberately lightweight: the message contains only numerical coordinates and a null-terminator, minimising bandwidth and preventing desynchronisation between the robots. The Surveyor robot, upon receiving the coordinates, enters into targeted navigation mode and uses its internal motion-planning logic to travel to the exact location.
 
 \subsubsection{Final Tagging and Output Summary}
-After detection, the drone tags the victim by updating their shirt colour to red, ensuring the system does not re-process previously identified victims. When all waypoints are traversed, the detection subsystem outputs a complete summary of found victims and their coordinates for quantitative assessment.
+After detection, the drone tags the victim by changing their shirt color to red, ensuring the system does not re-process victims that have already been identified. When all waypoints are traversed, the detection subsystem outputs a complete summary of found victims and their coordinates for quantitative assessment.
 
 \subsection{Ground Robot Navigation, and Obstacle Avoidance}
-Think about the key points you need to cover to describe the methods you used.
-Section about how the ground robot is moved and how it avoids obstacles.
+The ground robot we use is a simulation model of the Surveyor SRV-1 available in Webots. The controller facilitates autonomous navigation through a waypoint-based trajectory using waypoints received dynamically from the drone while maintaining the capability to reactively avoid unexpected obstacles.
+\par The system architecture is built on a Finite State Machine (FSM) that governs the transition between navigation, obstacle detection, and avoidance manoeuvres \cite{FSM}. The following is the image of the FSM.
+
+\begin{figure}[H] \centering \includegraphics[width=1\linewidth]{Ground Robot FSM.png} \caption{Ground Robot FSM} \label{fig:UGV FSM} \end{figure}
+
+\subsubsection{Waypoint Navigation}
+The robot travels to target coordinates $(x_{target}, y_{target})$ received from the drone using a proportional control loop. The navigation logic continuously calculates the heading error $\alpha$ between the robot's current orientation $\theta$ and the desired bearing to the target:
+\begin{equation} \alpha = \text{atan2}(y_{target} - y, x_{target} - x) - \theta \end{equation}
+The motor velocities are adjusted differentially to minimize $\alpha$. A proportional gain is applied to the heading error to determine the turning speed, while the forward speed is dynamically scaled based on proximity to the target. To ensure precision, the robot decelerates when the distance to the target is less than the defined threshold $D_{slow} = 1.0$\,m.
+
+\subsubsection{Obstacle Avoidance}
+The obstacle avoidance used here is a reactive "swerve" manoeuvre. The system monitors the front distance sensor ($d_{front}$). To filter out sensor noise, the system employs a temporal filter: an obstacle is confirmed only if $d_{front}$ remains below the safety threshold ($1.0$\,m) for $N=5$ consecutive simulation steps.
+\par Upon confirmation, the robot transitions to the obstacle avoidance state. This state calculates a temporary local detour point $(x_d, y_d)$ at a fixed lateral offset relative to the robot's current pose.
+\par We set the detour point to $0.3$\,m (30 cm) to the robot's right (perpendicular to the current heading). The coordinates for this manoeuvre are derived using the transformation:
+\begin{equation} \begin{bmatrix} x_d \\ y_d \end{bmatrix} = \begin{bmatrix} x \\ y \end{bmatrix} + 0.3 \cdot  \begin{bmatrix} \sin(\theta) \\ -\cos(\theta) \end{bmatrix}\end{equation}
+This calculation effectively places a virtual waypoint $30$\,cm to the immediate right of the robot. The robot navigates to this point to bypass the obstruction before reverting to navigation state to reassess the path to the original target. This method assumes that the environment consists of discrete obstacles rather than continuous walls, as the fixed lateral displacement allows the robot to side-step small objects without complex map processing.
 
 \subsection{Ground Robot SLAM Assisted Navigation}
-For our benchmark baseline, we developed a ground robot that uses a state-machine-based controller for autonomously moving to predefined coordinates. The robot is also assisted with SLAM and an Obstacle Avoidance algorithm to ensure it reaches the victims by any means efficiently.
+For our benchmark baseline, we developed a ground robot that uses a state-machine-based controller for autonomously moving to predefined coordinates; the logic behind moving to these predefined coordinates would be similar to the previous section. The robot is also assisted by SLAM and an Obstacle Avoidance algorithm that is provided by the previous section to ensure it reaches the victims efficiently.
+
+\subsubsection{Map Representation and World-Grid Transformation}
+This section would be beneficial in helping the SLAM picture a 2-D occupancy grid. This grid would be the source of keeping and tracking any changes that it found when traversing through the map. This grid will interact with the other algorithms and sensors within this SLAM approach, path-checking, detour generation, sensors, and victim detection all read or save information onto this grid.
 \par
+The grid is made by defining fixed limit boundaries (in meters) of the map, and anything that is beyond these limits would be treated as \textit{"out of bounds"} and would not be considered as a traversable area. 
+\par
+At anytime the robot wants to query or update the map, it needs to convert those coordinates (x,y) into indices (i,j). This is done through normalising and scaling coordinates using this function:
+\begin{align}
+r_x &= \frac{x - X_{\min}}{X_{\max} - X_{\min}}, & 
+i &= \left\lfloor r_x \cdot N \right\rfloor \\
+r_y &= \frac{y - Y_{\min}}{Y_{\max} - Y_{\min}}, & 
+j &= \left\lfloor r_y \cdot N \right\rfloor
+\end{align}
 \begin{itemize}
-    \item{The robot will be able to traverse throught those coordinates through a waypoint-following function with pose feedback using GPS or Compass and differential wheel speed control for slowing down near objectives }
-    \item{The robot is also equipped with an obstacle avoidance algorithm that allows the robot to detour sideways before it continue to drive towards the objective}
-    \item{SLAM is implemented for visualizing an occupancy grid for the robot using its 4 IR sensors, the occupancy grid will map free spaces, obstacles, and also the victims. It is also used for pre-checking an obstacle near the waypoint periodically, such that if an obstacle persist it will detour first before continue to head to the objective}
-    \item{The robot will also be    equipped with a camera for detecting the victims along the way, this is done because we will make this version of the robot to detect victims on its own without the help of a drone   }
+  \item $r_{x}$, $r_{y}$: a normalised position, where the point is between the maximum and minimum coordinates of the x, y axis as a ratio in [0,1]
+  \item x, y: the actual world coordinates in meters
+  \item $X_{\max}$, $X_{\min}$: the maximum and minimum bounds of the map along the x-axis
+  \item $Y_{\max}$, $Y_{\min}$: the maximum and minimum bounds of the map along the y-axis
+  \item {N}: the map size
 \end{itemize}
+This transformation function will be used at anytime the robot moves to provide updates to the grid map; it will play a significant role in helping the robot map the victims and check for clear paths and obstacles.
+
+\subsubsection{Sensor Model and Ray-Based Map Updates}
+The slam mode also features four IR distance sensors, placed at the front, left, right, and back of the robot. Those sensor readings would be converted to a clipped distance using this formula:
+\begin{align}
+d = \operatorname{clip}\bigl(0.4\,(1 - \tfrac{\text{raw}}{154}),\, 0,\, 0.4\bigr)
+\end{align}
+where it treats the raw sensor reading into a clamped distance [0,0.4]. Those readings are then projected into a global frame through ray-casting, for each sensor along a distance (d) and direction ($\theta$), the coordinates along the ray are:
+\begin{align}
+x(d) = x_r + d\cos\theta\qquad
+y(d) = y_r + d\sin\theta
+\end{align}
+Before the sensor hits an obstacle, the belief would be set to:
+\begin{align}
+v_{t+1} = \max\bigl(0,\; v_t - 0.05\bigr)
+\end{align}
+After a hit, the belief would be updated again to:
+\begin{align}
+v_{t+1} = 1.0
+\end{align}
+And along the way, the belief would keep getting updated in the case that after hitting the space is free again, which the process would jump back to the belief before it hits an obstacle.
+
+\subsubsection{Path Collision Checking on the Occupancy Map}
+For checking and planning ahead in cases where the path to a current target intersects any occupied cells in the near future. The controller will call a path checking routine, which takes points between the robot and the target over a fixed look-ahead distance. Each of those points can be formulated to:
+\begin{align}
+\mathbf{p} : [0.1, d_{\text{check}}] \to \mathbb{R}^2,\qquad
+\mathbf{p}(d) =
+\begin{bmatrix}
+x(d) \\
+y(d)
+\end{bmatrix}
+=
+\begin{bmatrix}
+x_r \\
+y_r
+\end{bmatrix}
++ d\,\hat{\mathbf{u}}
+\end{align}
+where $\hat{\mathbf{u}}$ is the unit vector towards the target, and $d\,$ is the distance that is incremented in fixed steps. That position would then be mapped onto the occupancy grid, and its cell value would be tested against an occupancy threshold. If it exceeds that threshold, it would return the world coordinate of the blocking cell and pass those coordinates to the detour planner for steering around the predicted obstacle.
+
+\subsubsection{Local Detour Planner}
+if the path collision checking function detects an obstacle, the planner would create a detour around the waypoint to avoid and go around the obstacle
+\par
+To avoid those obstacles, we rotate the vector $(u_x,\,u_y)$, rotate positively and negatively by 90 degrees. This will make two perpendicular unit vectors:
+\begin{align}
+\hat{\mathbf{n}}_L = (-u_y,\, u_x)
+\end{align}
+\begin{align}
+\hat{\mathbf{n}}_R = (u_y,\,-u_x)
+\end{align}
+Given a coordinate $(x_0, y_0)$, the robot will create two candidates for detour, either going left or right:
+\begin{align}
+\mathbf{D}_L = (x_o, y_o) + \delta \hat{\mathbf{n}}_L,
+\qquad
+\mathbf{D}_R = (x_o, y_o) + \delta \hat{\mathbf{n}}_R
+\end{align}
+An offset of $\delta = 0.3\,\text{m}$, is used for creating a safety limit such that the robot will not skim the obstacle.
+
+\subsubsection{Integration With Waypoint Traversal and Victim Revisit}
+The slam approach has 6 specific states: Detour, Revisit, Align, and Approach. Each of those states is covered within two phases: Initial Scan and Revisit. At the start, the robot will start with the Initial Scan phase, where it will start traversing the map in a boustrophedon lawn-mower-like pattern from top to bottom. During this phase, the robot will continuously mark obstacles, free spaces, and victims onto the grid.  
+\par
+Once finished with its traversal, the robot will switch into the Revisit Mode, where it takes the coordinates of the previously stored victims and starts visiting them again one by one, starting from the first victim spotted. Once it gets to the position where it spots the victim, it will switch states to Align and align itself with the victim until the heading error falls below the tolerance for alignment:
+\begin{align}
+e_{\theta} = \operatorname{normalize}\bigl(\theta_{v} - \psi\bigr)
+\end{align}
+Then it will switch state to approach the victim, not stopping until it stops detecting the color green, in which it would update its belief that it has already gone through that victim. After it finishes revisiting all the victim coordinates, the robot will stop and conclude its run.
+
 
 \subsection{Comparing Approaches}
-To compare the UAV-UGV search team to the UGV only approach we simulated different SAR scenarios.  In order to ensure controlled results we varied both the location of the victims, as well as the quantity and location of obstacles.
-
-
-\begin{itemize}
-    \item{Set a test map with target locations}
-    \item{Time the processes to find all victims using single rover approach}
-    \item{Time the processes to find all victims using paired rover-drone approach}
-    \item{Repeat for different test maps with different victim locations and obstacles}
-\end{itemize}
+To compare the UAV-UGV search party to the UGV only approach we simulated different SAR scenarios of varying complexity.  In order to obtain a results that best reflected the randomness of SAR outside of a simulated environment we varied the quantity and location of obstacles as well as the positions of the victims, however, to ensure comparable results both methods were used on each variation.  To ensure complete testing of the detection algorithm, custom victim prototypes were designed to represent casualties in various positions such as sitting and lying down.
+\par Both search parties were tasked with finding three victims in each of the different scenarios.  Since a victim cannot be considered to be helped until the UGV reaches them, the time taken to complete the search was defined as the time the UGV reached the third victim.  This was repeated multiple times for each scenario and an average calculated.
 
 \section{Results}
-\begin{itemize}
-    \item{The maps}
-    \item{The times each system took to complete tasks}
-\end{itemize}
+
+\subsection{Scenario 1}
+\begin{figure}[!htbp] \centering \includegraphics[width=\linewidth]{map1.png} \caption{Search and rescue scenario 1 with obstacles and victims} \label{fig:map1} \end{figure}
+
+\subsubsection{SLAM Assisted Ground Robot}
+The average time that the SLAM-assisted ground robot took to completes its search and rescue mission was $209.4$s. It took an average of $115$s for it to complete the search for the victims, and an average of $114.4$s for it to then visit all of the victims after that.
+\subsubsection{Aerial Supported Ground Robot}
+The average time that the aerial supported ground robot took to completes its search and rescue mission was $118.2$s. It took an average of $71$s for the drone to complete the search for the victims, and the rover took an average of $47.2$s for it to pursue and visit all those victims.
+
+\subsection{Scenario 2}
+
+
+\subsubsection{SLAM Assisted Ground Robot}
+
+\subsubsection{Aerial Supported Ground Robot}
+
+
 
 \section{Conclusion}
+
+This study demonstrates that, in comparison to ground-only methods, combining UAV and UGV platforms greatly increases search and rescue efficiency. According to the quantitative results, the aerial-supported system completed objectives in an average of 118.2 seconds as opposed to 209.4 seconds for the stand-alone SLAM-assisted robot, resulting in a 43.5\% reduction in the overall mission time.
+\par The aerial drone's capacity to quickly scan the environment and send victim coordinates in real time is the source of these performance improvements. While the stand-alone SLAM-assisted robot required 115 seconds to scan the area, the drone completed the same coverage in just 71 seconds which is a 38\% reduction in the search phase alone. The UAV reduces both the uncertainty and traversal burden placed on the ground robot. This allows the UGV to navigate directly towards the confirmed victims rather than relying solely on exhaustive exploratory mapping.
+\par These efficiency increases stem from two key factors:
 \begin{itemize}
-    \item{complexity of terrain}
-    \item{distance from initial location}
+    \item \textbf{Terrain Complexity:} The hybrid system handled ground clutter well. The aerial unit completely avoided the obstacles on the ground, while the SLAM-based rover had to navigate around each one to ensure full coverage. This efficiency gap is anticipated to grow as terrain complexity rises (e.g., in debris-heavy disaster zones).
+    \item \textbf{Distance from Initial Location:} The advantages increase with the size of the search area. The UAV can cover large distances quickly, allowing it to locate victims in the search grid much earlier than a ground robot could travel the same distance. This eliminates the need for blind searching and helps the ground unit execute a direct, energy-efficient route to the targets.
 \end{itemize}
+\par Ultimately, this research provides strong evidence that combining complementary robotic platforms maximises the strengths of each system while mitigating their individual weaknesses. This provides a convincing framework for operations of the future, where significant time savings may directly result in higher victim survival rates.
+\par Future work could extend this approach by incorporating more complex detection pipelines, cooperative multi-drone deployments, or real-time adaptive path planning to further enhance robustness in real-world disaster scenarios.
+
 \subsection{Limitations}
-Any Limitations
+\subsubsection{Aerial-supported Ground Robot Navigation and Obstacle Avoidance}
+The implementation of the ground robot navigation while being assisted by a drone is made to be simple. However, this design choice results in specific functional limitations:
+\begin{itemize}
+    \item \textbf{Blind detour:}  
+    The robot shifts 0.3\,m to the side without checking the space. It may hit wide objects.  
+    \item \textbf{Unused sensors:}  
+    Only the front sensor is used, so side hits can occur.  
+    \item \textbf{No memory:}  
+    The robot cannot recall past steps. It can loop inside U-shaped traps.  
+    \item \textbf{Uneven Terrain Limits:}  
+    Slopes tilt the front sensor and give false readings. Slip also affects turns.  
+\end{itemize}
+
+\subsubsection{Ground Robot SLAM Assisted Navigation}
+Our SLAM-assisted ground navigation was designed to be as straightforward as the aerial-supported method. However, this decision led to a few restrictions on this strategy:
+\begin{itemize}
+    \item \textbf{Victim marking:}  
+    The robot is able to mark and store the victim's location on the grid. However, any slight changes to the belief, such as how far the victim was spotted, can cause the victim to be marked on the grid more than once. This leads to the behavior of the robot to go to a single victim's coordinates during the revisit stage multiple times.  
+    \item \textbf{Ideal Localization:}  
+    The robot's pose is only obtained from the GPS and compass. This approach assumes perfect position and heading, which does not reflect real-world scenarios where GPS would not work. 
+    \item \textbf{Victim Detection:}  
+    Victim detection relies only on green color detection, making it prone to lighting and specific camera viewpoints. This also makes the robot believe that no obstacle is coloured green and every victim has a shared shirt color. 
+    \item \textbf{Victim Storage:}  
+    Victims are stored based on the position that they were spotted, which makes the revisiting phase slightly more tedious, where the robot must go back to the angle it spotted the victim and drive forward from that angle until green is no longer seen. After not seeing green anymore, it would assume that it already approached the victim closely. This approach is unconventional, as if the robot already gone to the victim before going to the coordinates where it was spotted, it would not count as the victim being visited.  
+\end{itemize}
 
 \begin{thebibliography}{1}
 \bibliographystyle{IEEEtran}
@@ -137,17 +267,25 @@ Any Limitations
     \bibitem{Webots}
     Webots. http://www.cyberbotics.com. Open-source Mobile Robot Simulation Software.
 
+    \bibitem{Repo}
+    A. Afilla, E. Silvey, A Fadhlurrahman, S Kampani, “AGSRR,” GitHub repository, 2025. Available: https://github.com/alvin-zhaf/AGSRR/
+
     \bibitem{Drone Original Code}
     Cyberbotics Ltd., mavic2pro.c, Webots Sample Controllers. Available: https://cyberbotics.com
 
     \bibitem{Boustrophedon}
     H. Choset, “Coverage of Known Spaces: The Boustrophedon Cellular Decomposition,” Autonomous Robots, vol. 9, no. 3, pp. 247–253, Dec. 2000, doi: https://doi.org/10.1023/a:1008958800904.
-    
-    \bibitem{}
-    Any papers publishing curical algorithms or similar
 
-    \bibitem{repo}
-    link to the repository on GitHub.
+    \bibitem{TensorFlow}
+    M. Abadi et al., “TensorFlow: Large-Scale Machine Learning on Heterogeneous Systems,” TensorFlow.org, 2015. Available: https://www.tensorflow.org
+
+    \bibitem{PyTorch}
+    A. Paszke et al., “PyTorch: An Imperative Style, High-Performance Deep Learning Library,” Advances in Neural Information Processing Systems, vol. 32, 2019.
+
+    \bibitem{FSM}
+    R. Brooks, "A robust layered control system for a mobile robot," in IEEE Journal on
+    Robotics and Automation, vol. 2, no. 1, pp. 14-23, March 1986, doi: 10.1109/JRA.1986.1087032.
+
 
 \end{thebibliography}
 
