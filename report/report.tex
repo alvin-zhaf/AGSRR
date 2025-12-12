@@ -11,7 +11,7 @@
 \usepackage{graphicx}
 \usepackage{cite}
 \usepackage{lipsum}
-\usepackage{bm}
+\usepackage{appendix}
 \hyphenation{op-tical net-works semi-conduc-tor IEEE-Xplore}
 
 \begin{document}
@@ -181,7 +181,7 @@ Once finished with its traversal, the robot will switch into the Revisit Mode, w
 \begin{align}
 e_{\theta} = \operatorname{normalize}\bigl(\theta_{v} - \psi\bigr)
 \end{align}
-Then it will switch state to approach the victim, not stopping until it stops detecting the color green, in which it would update its belief that it has already gone through that victim. After it finishes revisiting all the victim coordinates, the robot will stop and conclude its run.
+Then it will switch state to approach the victim, not stopping until it stops detecting the colour green, in which it would update its belief that it has already gone through that victim. After it finishes revisiting all the victim coordinates, the robot will stop and conclude its run.
 
 
 \subsection{Comparing Approaches}
@@ -199,16 +199,14 @@ The average time that the SLAM-assisted ground robot took to completes its searc
 The average time that the aerial supported ground robot took to completes its search and rescue mission was $118.2$s. It took an average of $71$s for the drone to complete the search for the victims, and the rover took an average of $47.2$s for it to pursue and visit all those victims.
 
 \subsection{Scenario 2}
-
+\begin{figure}[!htbp] \centering \includegraphics[width=\linewidth]{map2.jpeg} \caption{Search and rescue scenario 2 with obstacles and victims} \label{fig:map2} \end{figure}
 
 \subsubsection{SLAM Assisted Ground Robot}
-
+The SLAM only implementation was unable to locate all the victims meaning no time could be recorded, and no result obtained.
 \subsubsection{Aerial Supported Ground Robot}
-
-
+The average time that the aerial supported ground robot took to completes its search and rescue mission was $116$s. It took an average of $71$s for the drone to complete the search for the victims, and the rover took an average of $45$s for it to pursue and visit all those victims.
 
 \section{Conclusion}
-
 This study demonstrates that, in comparison to ground-only methods, combining UAV and UGV platforms greatly increases search and rescue efficiency. According to the quantitative results, the aerial-supported system completed objectives in an average of 118.2 seconds as opposed to 209.4 seconds for the stand-alone SLAM-assisted robot, resulting in a 43.5\% reduction in the overall mission time.
 \par The aerial drone's capacity to quickly scan the environment and send victim coordinates in real time is the source of these performance improvements. While the stand-alone SLAM-assisted robot required 115 seconds to scan the area, the drone completed the same coverage in just 71 seconds which is a 38\% reduction in the search phase alone. The UAV reduces both the uncertainty and traversal burden placed on the ground robot. This allows the UGV to navigate directly towards the confirmed victims rather than relying solely on exhaustive exploratory mapping.
 \par These efficiency increases stem from two key factors:
@@ -237,14 +235,24 @@ The implementation of the ground robot navigation while being assisted by a dron
 Our SLAM-assisted ground navigation was designed to be as straightforward as the aerial-supported method. However, this decision led to a few restrictions on this strategy:
 \begin{itemize}
     \item \textbf{Victim marking:}  
-    The robot is able to mark and store the victim's location on the grid. However, any slight changes to the belief, such as how far the victim was spotted, can cause the victim to be marked on the grid more than once. This leads to the behavior of the robot to go to a single victim's coordinates during the revisit stage multiple times.  
+    The robot is able to mark and store the victim's location on the grid. However, any slight changes to the belief, such as how far the victim was spotted, can cause the victim to be marked on the grid more than once. This leads to the behaviour of the robot to go to a single victim's coordinates during the revisit stage multiple times.  
     \item \textbf{Ideal Localization:}  
     The robot's pose is only obtained from the GPS and compass. This approach assumes perfect position and heading, which does not reflect real-world scenarios where GPS would not work. 
     \item \textbf{Victim Detection:}  
-    Victim detection relies only on green color detection, making it prone to lighting and specific camera viewpoints. This also makes the robot believe that no obstacle is coloured green and every victim has a shared shirt color. 
+    Victim detection relies only on green colour detection, making it prone to lighting and specific camera viewpoints. This also makes the robot believe that no obstacle is coloured green and every victim has a shared shirt colour. 
     \item \textbf{Victim Storage:}  
-    Victims are stored based on the position that they were spotted, which makes the revisiting phase slightly more tedious, where the robot must go back to the angle it spotted the victim and drive forward from that angle until green is no longer seen. After not seeing green anymore, it would assume that it already approached the victim closely. This approach is unconventional, as if the robot already gone to the victim before going to the coordinates where it was spotted, it would not count as the victim being visited.  
+    Victims are stored based on the position that they were spotted, which makes the revisiting phase slightly more tedious, where the robot must go back to the angle it spotted the victim and drive forward from that angle until green is no longer seen. After not seeing green any more, it would assume that it already approached the victim closely. This approach is unconventional, as if the robot already gone to the victim before going to the coordinates where it was spotted, it would not count as the victim being visited.  
 \end{itemize}
+
+\appendix
+The following sections are attributed to the corresponding authors:
+\begin{itemize}
+    \item Edward Silvey — Abstract; Introduction; Methods (Drone Movement and Flight Control; Comparing Approaches); Appendix; Referencing
+    \item Alfian Fadhlurrahman — Methods (Ground Robot Navigation and Obstacle Avoidance); Conclusion (Limitations)
+    \item Shailee Kampani — Methods (Victim Detection and Communication); Conclusion
+    \item Alvin Afilla — Methods (Ground Robot SLAM-Assisted Navigation); Results
+\end{itemize}
+
 
 \begin{thebibliography}{1}
 \bibliographystyle{IEEEtran}
@@ -285,7 +293,6 @@ Our SLAM-assisted ground navigation was designed to be as straightforward as the
     \bibitem{FSM}
     R. Brooks, "A robust layered control system for a mobile robot," in IEEE Journal on
     Robotics and Automation, vol. 2, no. 1, pp. 14-23, March 1986, doi: 10.1109/JRA.1986.1087032.
-
 
 \end{thebibliography}
 
