@@ -1,0 +1,127 @@
+#VRML_SIM R2025a utf8
+
+EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2025a/projects/objects/backgrounds/protos/TexturedBackground.proto"
+EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2025a/projects/objects/backgrounds/protos/TexturedBackgroundLight.proto"
+EXTERNPROTO "../protos/SurveyorSrv1.proto"
+EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2025a/projects/robots/dji/mavic/protos/Mavic2Pro.proto"
+EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2025a/projects/objects/floors/protos/RectangleArena.proto"
+EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2025a/projects/objects/rocks/protos/Rock.proto"
+EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2025a/projects/objects/solids/protos/SolidBox.proto"
+EXTERNPROTO "../protos/RescueVictimSitting.proto"
+EXTERNPROTO "../protos/RescueVictimFaceUp.proto"
+EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2025a/projects/appearances/protos/Asphalt.proto"
+
+WorldInfo {
+  info [
+    "This demonstration shows a DJI Mavic 2 PRO assisting a ground based robot locate a target destination."
+  ]
+  title "Robot Search"
+  basicTimeStep 8
+  defaultDamping Damping {
+    linear 0.5
+    angular 0.5
+  }
+}
+Viewpoint {
+  orientation -0.5773502691896258 0.5773502691896258 0.5773502691896258 2.0944
+  position 2.035510607740661 1.9700140922762457 7.590557644228495
+}
+TexturedBackground {
+}
+TexturedBackgroundLight {
+}
+SurveyorSrv1 {
+  translation 1.11 3.32 -0.01
+  controller "surveyor"
+  extensionSlot [
+    DEF receiver Receiver {
+      name "receiver(1)"
+    }
+  ]
+}
+Rock {
+  translation 1.77 3.18916 0.05
+  name "rock(1)"
+  scale 3
+}
+Rock {
+  translation 2.36793 2.76842 0.05
+  name "rock(3)"
+  scale 3
+}
+Rock {
+  translation 3.57402 2.63391 0.05
+  name "rock(6)"
+  scale 3
+}
+Rock {
+  translation 2.22664 0.788114 0.12
+  name "rock(13)"
+  scale 3
+}
+Rock {
+  translation 0.807002 0.91715 0.12
+  name "rock(15)"
+  scale 3
+}
+Rock {
+  translation 0.626207 2.05585 0.12
+  name "rock(4)"
+  scale 3
+}
+Rock {
+  translation 3.69042 0.561991 0.12
+  rotation 0 0 1 0.261799
+  name "rock(5)"
+  scale 3
+}
+Rock {
+  translation 2.96671 3.21085 0.14
+  name "rock(2)"
+  scale 3
+}
+Rock {
+  translation 1.11142 2.47452 0.08
+  name "rock(8)"
+  scale 3
+}
+Mavic2Pro {
+  translation 0.59001 3.57 0.455
+  rotation 0 0 1 -0.0015953071795866691
+  supervisor TRUE
+  bodySlot [
+    DEF emitter Emitter {
+      channel 1
+    }
+  ]
+}
+RectangleArena {
+  translation 2.03 1.97 0
+  floorSize 4 4
+  floorAppearance Asphalt {
+  }
+  wallHeight 0.6
+}
+DEF victim3 RescueVictimFaceUp {
+  translation 1.03 1.82 0.03
+  rotation 0 0 1 -2.094395307179586
+  scale 0.25 0.25 0.25
+  name "victim_faceup(1)"
+  shirtColor 0 1 0
+}
+DEF victim2 RescueVictimFaceUp {
+  translation 1.55 0.867 0.01
+  rotation 0 0 1 2.3562
+  scale 0.25 0.25 0.25
+  shirtColor 0 1 0
+}
+DEF victim1 RescueVictimSitting {
+  translation 3.08 0.754 0.1
+  rotation -0.2247330570648993 0.6547321662515769 0.7216791832509665 2.56451
+  scale 0.25 0.25 0.25
+  shirtColor 0 1 0
+}
+SolidBox {
+  translation 0.55 3.48 0.34
+  size 0.6 0.6 0.1
+}

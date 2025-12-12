@@ -40,7 +40,8 @@ The project compares two approaches:
 
 1.  **Open the World:**
     Launch Webots and open the world file located at:
-    worlds/RobotSearch.wbt
+    worlds/Scenario1.wbt
+    worlds/Scenario2.wbt
 
 2.  **Compile Controllers:**
 
@@ -62,6 +63,8 @@ The project compares two approaches:
 5.  **View Outputs:**
     - **Console:** Displays mission logs, victim detections, and navigation states.
     - **Map/Victims:** In Mode 2, press **`M`** to print the ASCII map or **`V`** to list found victims in the console.
+
+> Open the world file again to re-run the simulation if the victim’s shirt is red.
 
 ---
 
