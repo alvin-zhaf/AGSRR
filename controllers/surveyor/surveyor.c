@@ -65,12 +65,13 @@ typedef struct {
 static Victim victims[MAX_VICTIMS];
 static int victim_count = 0;
 
-// Types
+// Main Operation Modes
 typedef enum {
   MODE_AUTONOMOUS,
   MODE_AUTONOMOUS_SLAM
 } RobotMode;
 
+// FSM States
 typedef enum {
   STATE_INIT,
   STATE_NAVIGATE,
@@ -99,6 +100,7 @@ typedef struct {
   WbDeviceTag left, right;
 } Motors;
 
+// Robot Context
 typedef struct {
   RobotState state;
   RobotState prev_state;
@@ -139,6 +141,8 @@ typedef struct {
 #define VICTIM_ALIGN_SPEED 0.08
 
 // Helper functions
+
+// Normalizes angle to be between -PI and +PI (Standard Radians)
 static double normalize_angle(double angle) {
   while (angle > M_PI)
     angle -= 2.0 * M_PI;
@@ -147,6 +151,7 @@ static double normalize_angle(double angle) {
   return angle;
 }
 
+// Reads GPS and Compass to create a Pose struct
 static Pose get_robot_pose(WbDeviceTag gps, WbDeviceTag compass) {
   Pose pose = {0};
   const double *gps_values = wb_gps_get_values(gps);
@@ -155,17 +160,20 @@ static Pose get_robot_pose(WbDeviceTag gps, WbDeviceTag compass) {
     pose.x = gps_values[0];
     pose.y = gps_values[1];
   }
+  // Convert compass vector (North) to Heading Angle (Radians)
   if (compass_values) {
     pose.heading = atan2(compass_values[0], compass_values[1]);
   }
   return pose;
 }
 
+// Set motor speed
 static void set_motor_speeds(Motors motors, double left, double right) {
   wb_motor_set_velocity(motors.left, left);
   wb_motor_set_velocity(motors.right, right);
 }
 
+// Euclidean distance between robot and point
 static double distance_to_point(Pose pose, double x, double y) {
   double dx = x - pose.x, dy = y - pose.y;
   return sqrt(dx * dx + dy * dy);
@@ -175,17 +183,21 @@ static void drive_to_target(Motors motors, Pose pose, double target_x, double ta
   double dx = target_x - pose.x, dy = target_y - pose.y;
   double distance = sqrt(dx * dx + dy * dy);
   double desired_heading = atan2(dy, dx);
+  
+  // Calculate how much we need to turn
   double heading_error = normalize_angle(desired_heading - pose.heading);
 
   double speed = MAX_SPEED;
-  if (distance < SLOW_DOWN_DISTANCE)
+  if (distance < SLOW_DOWN_DISTANCE) // Decelerate smoothly
     speed *= (0.3 + 0.7 * distance / SLOW_DOWN_DISTANCE);
 
   if (fabs(heading_error) > TOLERANCE * 3.0) {
+    // If error is large, turn in place (Pivot)
     double turn_speed = speed * 0.5;
     set_motor_speeds(motors, heading_error > 0 ? -turn_speed : turn_speed, heading_error > 0 ? turn_speed : -turn_speed);
   }
   else {
+    // If error is small, drive forward with slight steering correction
     double correction = heading_error * 0.4;
     set_motor_speeds(motors, speed * (1.0 - correction * 0.3), speed * (1.0 + correction * 0.3));
   }
@@ -546,6 +558,7 @@ int main(int argc, char **argv) {
 
   wb_keyboard_enable(timeStep);
 
+  // Mode Selection
   printf("Select mode (click 3D window first):\n");
   printf("  1 = Autonomous navigation (drone waypoints)\n");
   printf("  2 = Autonomous navigation with SLAM\n");
@@ -565,7 +578,8 @@ int main(int argc, char **argv) {
       printf("Mode: Autonomous navigation with SLAM\n");
     }
   }
-
+  
+  // Hardware Initialisation
   Motors motors = {wb_robot_get_device("left motor"), wb_robot_get_device("right motor")};
   WbDeviceTag gps = wb_robot_get_device("gps");
   WbDeviceTag compass = wb_robot_get_device("compass");
@@ -661,7 +675,8 @@ int main(int argc, char **argv) {
   int victim_debug_counter = 0;
   
   srand(42);
-
+  
+  // Main Control Loop
   while (wb_robot_step(timeStep) != -1) {
     Pose pose = get_robot_pose(gps, compass);
 
@@ -678,9 +693,10 @@ int main(int argc, char **argv) {
     if (key == 'V' || key == 'v') {
       print_victims();
     }
-
+    
+    // Autonomous mode with drone waypoints
     if (mode == MODE_AUTONOMOUS) {
-      // Autonomous mode with drone waypoints
+      // Check for incoming radio message
       if (receiver && wb_receiver_get_queue_length(receiver) > 0 && !ctx.has_target) {
         const char *msg = (const char *)wb_receiver_get_data(receiver);
         sscanf(msg, "%lf,%lf", &ctx.target_x, &ctx.target_y);
@@ -692,14 +708,17 @@ int main(int argc, char **argv) {
 
       double front_distance = front_ds ? wb_distance_sensor_get_value(front_ds) : 0;
 
+      // Mode 1 FSM
       switch (ctx.state) {
       case STATE_INIT:
         if (++init_counter >= 10) {
           ctx.prev_front_distance = front_distance;
+          // If we already have a drone target, go to navigate! Otherwise, idle.
           ctx.state = ctx.has_target ? STATE_NAVIGATE : STATE_IDLE;
         }
         break;
-
+        
+      // Wait to get coordinates from receiver
       case STATE_IDLE:
         set_motor_speeds(motors, 0, 0);
         break;
@@ -707,22 +726,31 @@ int main(int argc, char **argv) {
       case STATE_NAVIGATE:
       {
         double distance_to_target = distance_to_point(pose, ctx.target_x, ctx.target_y);
+        
+        // Calculate how much the sensor reading changed since last frame (Noise Filter)
         double change = fabs(front_distance - ctx.prev_front_distance);
         ctx.prev_front_distance = front_distance;
-      
+        
+        // 1. CHECK ARRIVAL
         if (distance_to_target < TOLERANCE) {
           printf("Reached target (%.2f, %.2f)\n", ctx.target_x, ctx.target_y);
-          ctx.has_target = false;
-          ctx.pause_counter = 0;
+          ctx.has_target = false;      // Mark job as done
+          ctx.pause_counter = 0;       // Reset timer
           set_motor_speeds(motors, 0, 0);
-          ctx.state = STATE_PAUSE;
+          ctx.state = STATE_PAUSE;     // Stop briefly before next action
         }
+        // 2. CHECK FOR POTENTIAL OBSTACLES
+        // Only react if:
+        //  a) We are still far from target (> 0.5m) - prevents stopping right at the goal.
+        //  b) Sensor signal is stable (change <= 70.0) - ignores sudden spikes from terrain.
+        //  c) Object is close (value > Threshold).
         else if (distance_to_target > 0.5 && change <= TERRAIN_MAX_CHANGE && front_distance > OBSTACLE_THRESHOLD) {
-          ctx.obstacle_frames = 1;
-          ctx.state = STATE_OBSTACLE_CHECK;
+          ctx.obstacle_frames = 1;      // Start counting how long we see it
+          ctx.state = STATE_OBSTACLE_CHECK; // Switch to verification state
         }
+        // 3. DRIVE NORMALLY
         else {
-          ctx.obstacle_frames = 0;
+          ctx.obstacle_frames = 0;      // Reset counter if path is clear
           drive_to_target(motors, pose, ctx.target_x, ctx.target_y);
         }
         break;
@@ -733,21 +761,29 @@ int main(int argc, char **argv) {
         double change = fabs(front_distance - ctx.prev_front_distance);
         ctx.prev_front_distance = front_distance;
 
+        // Condition A: It was just noise (sensor spiked heavily)
         if (change > TERRAIN_MAX_CHANGE) {
           ctx.obstacle_frames = 0;
-          ctx.state = STATE_NAVIGATE;
+          ctx.state = STATE_NAVIGATE; // False alarm, keep driving
         }
+        // Condition B: Object is still there (consistent reading)
         else if (front_distance > OBSTACLE_THRESHOLD) {
+          // Increment "Confidence Counter"
           if (++ctx.obstacle_frames >= OBSTACLE_SUSTAINED_FRAMES) {
+            // CONFIRMED: It's a real obstacle.
+            // Calculate a "Blind Detour": Point 30cm to the right relative to heading.
             ctx.detour_x = pose.x + 0.3 * sin(pose.heading);
             ctx.detour_y = pose.y - 0.3 * cos(pose.heading);
+            
             ctx.obstacle_frames = 0;
-            ctx.state = STATE_AVOID_OBSTACLE;
+            ctx.state = STATE_AVOID_OBSTACLE; // execute evasion
           }
           else {
+            // Keep driving while we verify (don't stop immediately)
             drive_to_target(motors, pose, ctx.target_x, ctx.target_y);
           }
         }
+        // Condition C: Object disappeared (it was momentary)
         else {
           ctx.obstacle_frames = 0;
           ctx.state = STATE_NAVIGATE;
@@ -757,6 +793,7 @@ int main(int argc, char **argv) {
 
       case STATE_AVOID_OBSTACLE:
         if (distance_to_point(pose, ctx.detour_x, ctx.detour_y) < TOLERANCE) {
+          // Detour point reached. Stop and re-assess.
           ctx.pause_counter = 0;
           set_motor_speeds(motors, 0, 0);
           ctx.state = STATE_PAUSE;
@@ -768,6 +805,8 @@ int main(int argc, char **argv) {
 
       case STATE_PAUSE:
         if (++ctx.pause_counter >= PAUSE_STEPS)
+          // If we still have a target (e.g. after a detour), resume Navigation.
+          // If we reached the target, go to Idle.
           ctx.state = ctx.has_target ? STATE_NAVIGATE : STATE_IDLE;
         break;
 
